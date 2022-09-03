@@ -282,7 +282,7 @@ class LabelCanv(tk.Canvas, object):
 class CanvasFrame(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
         createfx = kwargs.pop('create', None)
-        super(CanvasFrame, self).__init__(master)
+        super(CanvasFrame, self).__init__(master, *args, **kwargs)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.canv = LabelCanv(master, *args, create=createfx, **kwargs)
@@ -494,16 +494,17 @@ class Labeler(tk.Tk, object):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.scrollsidepanel = ScrollSidePanel(self)
+        self.scrollsidepanel = ScrollSidePanel(self, bd=3, relief='raised')
         self.scrollsidepanel.grid(row=0, column=1, sticky='nsew', rowspan=2)
         self.sidepanel = self.scrollsidepanel.panel
 
         self.cframe = CanvasFrame(
-            self, create=self.sidepanel.selector.create)
+            self, create=self.sidepanel.selector.create,
+            bd=3, relief='raised')
         self.cframe.grid(row=0, column=0, sticky='nsew')
         self.lcanv = self.cframe.canv
 
-        self.frameinfo = InfoPanel(self)
+        self.frameinfo = InfoPanel(self, bd=3, relief='raised')
         self.frameinfo.grid(row=1, column=0, sticky='nsew')
 
         tku.add_bindings(self)
@@ -727,7 +728,7 @@ class Labeler(tk.Tk, object):
             self.changed = bool(oldname) or self.changed
             self.lcanv.changed = False
 
-    def _canceled_saved(self):
+    def _canceled_save(self):
         """True if canceled, else False."""
         self._update_labels()
         if self.changed:
@@ -744,7 +745,7 @@ class Labeler(tk.Tk, object):
     @tku.Bindings('<Shift-Escape>')
     def destroy(self):
         self.lcanv.unselect()
-        if self._canceled_saved():
+        if self._canceled_save():
             return
         super(Labeler, self).destroy()
 
