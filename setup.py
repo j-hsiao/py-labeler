@@ -7,6 +7,6 @@ setup(
     author='Jason Hsiao',
     author_email='oaishnosaj@gmail.com',
     description='Label sets of images.',
-    packages=['jhsiao.labeler', 'jhsiao.labeleritems'],
+    packages=['jhsiao', 'jhsiao.labeler', 'jhsiao.labeleritems'],
     install_requires=['jhsiao-tkutil @ git+https://github.com/j-hsiao/py-tkutil.git']
 )
