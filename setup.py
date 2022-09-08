@@ -1,6 +1,6 @@
 from setuptools import setup
-from jhsiao.namespace import make_ns, fdir
-make_ns('jhsiao', 'jhsiao/labeleritems', dir=fdir(__file__))
+from jhsiao.namespace import make_ns
+make_ns('jhsiao', 'jhsiao/labeleritems')
 setup(
     name='jhsiao-labeler',
     version='0.0.1',
@@ -8,5 +8,7 @@ setup(
     author_email='oaishnosaj@gmail.com',
     description='Label sets of images.',
     packages=['jhsiao', 'jhsiao.labeler', 'jhsiao.labeleritems'],
-    install_requires=['jhsiao-tkutil @ git+https://github.com/j-hsiao/py-tkutil.git']
+    install_requires=[
+        'jhsiao-tkutil @ git+https://github.com/j-hsiao/py-tkutil.git',
+        'numpy', 'opencv-python']
 )

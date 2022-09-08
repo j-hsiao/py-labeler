@@ -46,6 +46,14 @@ class RotatedRectangle(Item, tku.Behavior):
             RRectSide.bind(widget, bindfunc='tag_bind')
             RRectPt.bind(widget, bindfunc='tag_bind')
 
+    @staticmethod
+    def entered(master, idn):
+        master.itemconfigure(idn, stipple='gray50')
+
+    @staticmethod
+    def left(master, idn):
+        master.itemconfigure(idn, stipple='12')
+
     def addtags(self, tagdb):
         super(RotatedRectangle, self).addtags(tagdb)
         suff = self.idns[0]

@@ -26,6 +26,20 @@ class Point(Item):
         if not master.tag_bind(Point.TAGS[0]):
             Point.bind(master, bindfunc='tag_bind')
 
+    @staticmethod
+    def entered(widget, idn):
+        color = widget.itemcget(idn, 'activeoutline')
+        widget.itemconfigure(
+            idn, fill=Item.modcolor(widget, color),
+            outline=color)
+
+    @staticmethod
+    def left(widget, idn):
+        color = widget.itemcget(idn, 'activeoutline')
+        widget.itemconfigure(
+            idn, fill=color,
+            outline=Item.modcolor(widget, color))
+
     def rescale(self, widget):
         idn = self.idns[0]
         x, y = self.xy(widget, idn)
