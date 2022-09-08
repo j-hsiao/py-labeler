@@ -1,6 +1,6 @@
 from setuptools import setup
-from jhsiao.namespace import make_ns, fdir
-make_ns('jhsiao', 'jhsiao/labeleritems', dir=fdir(__file__))
+from jhsiao.namespace import make_ns
+make_ns('jhsiao', 'jhsiao/labeleritems')
 setup(
     name='jhsiao-labeler',
     version='0.0.1',
