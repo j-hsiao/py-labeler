@@ -8,5 +8,7 @@ setup(
     author_email='oaishnosaj@gmail.com',
     description='Label sets of images.',
     packages=['jhsiao', 'jhsiao.labeler', 'jhsiao.labeleritems'],
-    install_requires=['jhsiao-tkutil @ git+https://github.com/j-hsiao/py-tkutil.git']
+    install_requires=[
+        'jhsiao-tkutil @ git+https://github.com/j-hsiao/py-tkutil.git',
+        'numpy', 'opencv-python']
 )
