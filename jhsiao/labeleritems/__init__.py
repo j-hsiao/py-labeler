@@ -145,6 +145,7 @@ class Item(tku.Behavior):
     # LENGTH should be the length of the 'data' value in todict()
     LENGTH = 0
     TAGS = ['Item', 'Item_']
+
     def __init__(self, widget, *idns, **kwargs):
         """Initialize the item.
 
@@ -171,6 +172,7 @@ class Item(tku.Behavior):
         """Rescale fixed-sized items."""
         for item in self.subitems:
             item.rescale(widget)
+
 
     def addtags(self, tagdb):
         """Add new tags to db.
@@ -273,6 +275,18 @@ class Item(tku.Behavior):
     def recolor_(master, idn, color):
         """Change the color given idn."""
         raise NotImplementedError
+
+    # mainly for composite for better visual indication
+    # of which items compose the composite
+    @staticmethod
+    def entered(master, idn):
+        """Act as if mouse entered."""
+        pass
+
+    @staticmethod
+    def left(master, idn):
+        """Act as if mouse left."""
+        pass
 
     def recolor(self, widget, color):
         """Change the color given idn."""
@@ -470,28 +484,30 @@ class Composite(Item):
         if not widget.tag_bind('Composite'):
             Composite.bind(widget, bindfunc='tag_bind')
 
-    @tku.Bindings('<Control-Shift-Button-1>')
-    @classmethod
-    def _wiggle(cls, widget):
-        """Wiggle the subclass items.
+    @tku.Bindings('<Enter>')
+    @staticmethod
+    def _entered(widget):
+        for sub in Composite.bases(widget):
+            sub.entered(widget, sub.idns[0])
 
-        Gives visual indication of which subitems belong to the
-        same composite.  SubItems are wiggled in order.
-        """
+    @tku.Bindings('<Leave>')
+    @staticmethod
+    def _left(widget):
+        for sub in Composite.bases(widget):
+            sub.left(widget, sub.idns[0])
+
+    @staticmethod
+    def bases(widget):
+        """Generate all non-composite items."""
         tag = Item.tagat(widget, 'current', 1)
         self = widget.items[int(Item.getidn(tag))][0]
         q = deque(self.subitems)
-        delay = 0
         while q:
             item = q.popleft()
             if isinstance(item, Composite):
                 q.extendleft(reversed(item.subitems))
             else:
-                for idn in item.idns:
-                    widget.after(delay, widget.move, idn, 5, 0)
-                    widget.after(delay+50, widget.move, idn, -10, 0)
-                    widget.after(delay+100, widget.move, idn, 5, 0)
-                delay += 250
+                yield item
 
     @classmethod
     def __initxy(cls, x,y):
@@ -581,7 +597,20 @@ def create_composite(name, components):
             for item in components]
     for primary, subcls in enumerate(component_classes):
         if subcls.__name__ != 'Point':
-            break
+            if issubclass(subcls, Composite):
+                q = deque(subcls.components)
+                while q:
+                    subsub = q.popleft()
+                    if subsub.__name__ != 'Point':
+                        if issubclass(subsub, Composite):
+                            q.extendleft(reversed(subsub.components))
+                        else:
+                            q.append(None)
+                            break
+                if q:
+                    break
+            else:
+                break
     return type(
         name,
         (Composite,),
@@ -702,6 +731,8 @@ class CompositeCreator(tk.Toplevel, object):
         newclass = create_composite(name, self.targetsbox.get(0, 'end'))
         itemclasses[name] = newclass
         self.master._bx.insert('end', name)
+        self.master._bx.selection_clear(0, 'end')
+        self.master._bx.selection_set('end')
         self.destroy()
 
     def destroy(self):

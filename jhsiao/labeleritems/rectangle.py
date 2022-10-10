@@ -30,6 +30,13 @@ class Rectangle(Item):
             Rectangle.bind(widget, bindfunc='tag_bind')
             RectPt.bind(widget, bindfunc='tag_bind')
 
+    @staticmethod
+    def entered(master, idn):
+        master.itemconfigure(idn, stipple='gray50')
+
+    @staticmethod
+    def left(master, idn):
+        master.itemconfigure(idn, stipple='gray12')
 
     def addtags(self, tagdb):
         super(Rectangle, self).addtags(tagdb)
