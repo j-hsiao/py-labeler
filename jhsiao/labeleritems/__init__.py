@@ -1,11 +1,16 @@
 """A namespace package for adding items for the labeler to use."""
+from __future__ import print_function
+__all__ = ['Obj', 'BGImage', 'Crosshairs']
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
-from jhsiao.tkutil.bindings import Bindings
+import math
 
 import numpy as np
 from PIL import Image, ImageTk
 
+from jhsiao.tkutil import tk
+from jhsiao.tkutil.bindings import Bindings
+from jhsiao.utils.importutils import get_subclasses
 bindings = Bindings('tag_bind')
 
 class Obj(object):
@@ -41,6 +46,7 @@ class Obj(object):
             else:
                 self.ids.append(idn)
         self.addtags(master, self.ids, Obj.TAGS)
+        master.tag_raise('Crosshairs')
 
     def marktop(self, master):
         """Mark this Obj as a top-level object."""
@@ -172,15 +178,16 @@ class Obj(object):
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
         widget.objid = idn
-        widget.tag_raise(tag)
+        widget.tag_raise(tag, 'Obj')
 
 class BGImage(object):
     binds = bindings['BGImage']
-    def __init__(self, master, **kwargs):
+    def __init__(self, master):
         self.idn = master.create_image(0,0, anchor='nw')
         self.im = None
         self.raw = None
         master.addtag('BGImage', 'withtag', self.idn)
+        master.tag_lower('BGImage')
 
     def show(self, master, im):
         if isinstance(im, str):
@@ -219,3 +226,97 @@ class BGImage(object):
         master.itemconfigure(self.idn, image=self.im)
         master.coords(
             self.idn, master.canvasx(0), master.canvasy(0))
+
+    @staticmethod
+    @binds.bind('<Button-1>')
+    def _create(widget, x, y):
+        pass
+        #create
+        #widget.event_generate('<ButtonRelease-1>', x, y)
+        #widget.event_generate('<Button-1>', x, y)
+
+class ObjSelector(tk.frame, object):
+    def __init__(self, master, *args, **kwargs):
+        super(ObjSelector, self).__init__(master, *args, **kwargs)
+        self.lst = tk.Listbox(self)
+        self.scroll = tk.Scrollbar(
+            self, orient='horizontal', command=self.lst.yview)
+        self.lst.configure(yscrollcommand=self.scroll.set)
+        self.lst.grid(row=0, column=0)
+        self.scroll.grid(row=0, column=1)
+
+        self.classes = dict(
+            get_subclasses(Obj, __path__, 'jhsiao.labeleritems.'))
+        for cls in self.classes:
+            self.lst.insert('end', cls)
+
+
+
+class Crosshairs(object):
+    """Canvas crosshairs."""
+    TAG = 'Crosshairs'
+    UP = (0,1)
+    def __init__(self, master):
+        k = dict(
+            state='disabled',
+            tags=('Crosshairs',))
+        self.idns = (
+            master.create_line(0, 0, 1, 1, fill='black', width=3, **k),
+            master.create_line(0, 0, 1, 1, fill='black', width=3, **k),
+            master.create_line(0, 0, 1, 1, fill='white', width=1, **k),
+            master.create_line(0, 0, 1, 1, fill='white', width=1, **k))
+        master.tag_raise('Crosshairs')
+        master.configure(cursor='None')
+        self.up = (0, 1)
+
+    @staticmethod
+    def hide(master):
+        master.itemconfigure('Crosshairs', state='hidden')
+
+    @staticmethod
+    def show(master):
+        master.itemconfigure('Crosshairs', state='disabled')
+
+    @staticmethod
+    def _edgepts(dx1, dx2, dy1, dy2, vx, vy, cx, cy):
+        """Return vectors to reach the edges of the canvas.
+
+        dx/dy: int
+            Signed distance to an edge.
+        vx, vy: vector direction.
+        """
+        if vx:
+            mx = (dx1 / vx, dx2 / vx)
+            if mx[0] > mx[1]:
+                mx = mx[::-1]
+        else:
+            mx = [-math.inf, math.inf]
+        if vy :
+            my = (dy1 / vy, dy2 / vy)
+            if my[0] > my[1]:
+                my = my[::-1]
+        else:
+            my = [-math.inf, math.inf]
+        m1 = max(mx[0], my[0])
+        m2 = min(mx[1], my[1])
+        return (
+            (int(vx*m1)+cx, int(vy*m1)+cy),
+            (int(vx*m2)+cx, int(vy*m2)+cy))
+
+    def moveto(self, master, x, y):
+        """Place crosshairs at location.
+
+        master: tk.Canvas
+        x,y: int, the widget mouse x,y coords (not canvasxy)
+        """
+        w = master.winfo_width()
+        h = master.winfo_height()
+        cx, cy = Obj.canvxy(master, x, y)
+        (x1,y1), (x2,y2) = self._edgepts(-x, w-x, -y, h-y, *self.up, cx, cy)
+        idns = self.idns
+        master.coords(idns[0], x1, y1, x2, y2)
+        master.coords(idns[2], x1, y1, x2, y2)
+        (x1,y1), (x2,y2) = self._edgepts(
+            -x, w-x, -y, h-y, self.up[1], -self.up[0], cx, cy)
+        master.coords(idns[1], x1, y1, x2, y2)
+        master.coords(idns[3], x1, y1, x2, y2)
