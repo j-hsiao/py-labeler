@@ -1,0 +1,2 @@
+class Labeler(object):
+    pass
