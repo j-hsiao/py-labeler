@@ -1,5 +1,5 @@
 from jhsiao.labeleritems import point, bindings, BGImage
-from jhsiao.labeler import tk
+from jhsiao.tkutil import tk
 
 
 def test_point():

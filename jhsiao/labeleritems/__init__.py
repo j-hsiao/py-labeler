@@ -3,6 +3,7 @@ from __future__ import print_function
 __all__ = ['Obj', 'BGImage', 'Crosshairs']
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
+import sys
 import math
 
 import numpy as np
@@ -20,23 +21,40 @@ class Obj(object):
     tk.Canvas items.  The items that make an Obj should always have a
     fixed relative stacking order.  This allows selecting particular
     items by searching for the object idtag.  The Obj's idtag is the
-    name of the Obj joined to the item id of its first item by an
+    name of the Obj class joined to the item id of its first item by an
     underscore.  All constituent items should have this object tag.
+    For instance, a Rectangle may have a Point as a corner.
+    This particular Point should also contain Rectangle_<topid> in its
+    list of tags.
 
     Class attributes:
         TAGS: list of str
             These are tags that all Objs of this type have, including
-            sub-Objs.  It is expected that the last tag is a tag that
-            would indicate the top-level object and so should contain
-            {}.
+            sub-Objs.  It is expected that the last tag is the idtag
+            for the class.
         IDX: int
-            The index in the list of all tags for that idn.  This takes
-            All tags from base Objs into account.
+            The index of the idtag for the particular class.
     """
     TOP = 'top'
-    TAGS = ['Obj', 'Obj_{}']
-    IDX = 1
+    TAGS = ['Obj']
+    IDX = 0
     binds = bindings['Obj']
+    classes = dict()
+
+    @staticmethod
+    def register(item):
+        orig = Obj.classes.get(item.__name__)
+        if orig is None:
+            Obj.classes[item.__name__] = item
+        else:
+            print(
+                item.__name__, 'was already added.',
+                orig, 'vs', item, file=sys.stderr)
+        return item
+
+    @classmethod
+    def idtag(cls, idn):
+        return cls.TAGS[-1].format(idn)
 
     def __init__(self, master, *ids):
         self.ids = []
@@ -92,7 +110,7 @@ class Obj(object):
 
         ids: list of int
             The ids to add tags to.
-        tags: list of str
+        tags: str or list of str
             The tags to add.  If a tag contains "{}", then it will
             be replaced with the first idn in `ids`
         """
@@ -107,7 +125,7 @@ class Obj(object):
         p = Obj.canvxy(master, x, y)
         if target != p:
             master.event_generate(
-                '<Shift-Motion>',
+                '<Motion>',
                 x=x+(target[0]-p[0]),
                 y=y+(target[1]-p[1]),
                 warp=True, when='head')
@@ -135,24 +153,24 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def data(widget, idn):
+    def data(widget, idn, fmt=None):
         """Return a sequence of data represented by the Obj."""
         raise NotImplementedError
 
     @classmethod
-    def todict(cls, widget, idn):
+    def todict(cls, widget, idn, fmt=None):
         """Convert data to dict."""
         return dict(
-            data=cls.data(widget, idn),
+            data=cls.data(widget, idn, fmt),
             color=cls.color(widget, idn))
 
     @staticmethod
-    def fromdict(widget, dct):
+    def fromdict(widget, dct, fmt=None):
         """Restore from a dict."""
         raise NotImplementedError
 
     @staticmethod
-    def activate(widget, idn):
+    def activate(widget, ids):
         """Mark the Obj as active.
 
         This is generally called in the case when Obj is actually a
@@ -161,14 +179,16 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def deactivate(widget, idn):
+    def deactivate(widget, ids):
         """Opposite of activate."""
         raise NotImplemented
 
     @classmethod
-    def members(cls, widget, idn):
+    def members(cls, widget, idn, idx=None):
         """Find the member idns of this Obj class."""
-        return widget.find('withtag', widget.gettags(idn)[cls.IDX])
+        if idx is None:
+            idx = cls.IDX
+        return widget.find('withtag', widget.gettags(idn)[idx])
 
     # General Obj behavior
     @staticmethod
@@ -179,6 +199,33 @@ class Obj(object):
         cls, idn = Obj.parsetag(tag)
         widget.objid = idn
         widget.tag_raise(tag, 'Obj')
+
+    # Leave/enter can cause an infinite loop mouse button because the
+    # new Item changes shape causing infinite enter/leave, so only
+    # fire (de)activate when no buttons are pressed
+    binds.bind(
+        '<B1-Leave>', '<B1-Enter>',
+        '<B2-Leave>', '<B2-Enter>',
+        '<B3-Leave>', '<B3-Enter>',
+        '<B4-Leave>', '<B4-Enter>',
+        '<B5-Leave>', '<B5-Enter>',
+    )(' ')
+
+    @staticmethod
+    @binds.bind('<Enter>')
+    def onenter(widget):
+        """Call activate."""
+        tag = Obj.toptag(widget, 'current')
+        cls, idn = Obj.parsetag(tag)
+        Obj.classes[cls].activate(widget, widget.find('withtag', tag))
+
+    @staticmethod
+    @binds.bind('<Leave>')
+    def onleave(widget):
+        """Call deactivate."""
+        tag = Obj.toptag(widget, 'current')
+        cls, idn = Obj.parsetag(tag)
+        Obj.classes[cls].deactivate(widget, widget.find('withtag', tag))
 
 class BGImage(object):
     binds = bindings['BGImage']
@@ -235,7 +282,7 @@ class BGImage(object):
         #widget.event_generate('<ButtonRelease-1>', x, y)
         #widget.event_generate('<Button-1>', x, y)
 
-class ObjSelector(tk.frame, object):
+class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
         super(ObjSelector, self).__init__(master, *args, **kwargs)
         self.lst = tk.Listbox(self)

@@ -3,10 +3,11 @@ from __future__ import division
 __all__ = ['Point']
 from . import Obj, bindings
 
+@Obj.register
 class Point(Obj):
     HELP = 'A point. (x, y)'
     TAGS = ['Point', 'Point_{}']
-    IDX = (Obj.IDX  + len(TAGS))
+    IDX = Obj.IDX  + len(TAGS)
 
     binds = bindings['Point']
 
@@ -41,22 +42,22 @@ class Point(Obj):
             idn, **Point.colorkwargs(widget, color))
 
     @staticmethod
-    def data(widget, idn='current'):
+    def data(widget, idn, fmt=None):
         l, t, r, b = widget.coords(idn)
         return (l+r)//2, (t+b)//2
 
     @staticmethod
-    def fromdict(widget, dct):
+    def fromdict(widget, dct, fmt=None):
         x, y = dct['data']
         return Point(widget, x, y, dct['color'])
 
     @staticmethod
-    def activate(widget, idn='current'):
-        widget.itemconfigure(idn, width=5)
+    def activate(widget, ids):
+        widget.itemconfigure(ids[0], width=2)
 
     @staticmethod
-    def deactivate(widget, idn='current'):
-        widget.itemconfigure(idn, width=1)
+    def deactivate(widget, ids):
+        widget.itemconfigure(ids[0], width=1)
 
     @staticmethod
     def moveto(widget, x, y, idn='current'):
