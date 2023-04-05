@@ -26,18 +26,10 @@ class Rect(Obj):
                 x, y, x, y, fill=color,
                 outline=color,
                 stipple='gray12', activestipple='gray25'),
-            master.create_line(
-                x, y, x, y,
-                width=1, activewidth=5, fill=alt),
-            master.create_line(
-                x, y, x, y,
-                width=1, activewidth=5, fill=alt),
-            master.create_line(
-                x, y, x, y,
-                width=1, activewidth=5, fill=alt),
-            master.create_line(
-                x, y, x, y,
-                width=1, activewidth=5, fill=alt),
+            RectSide(master, x, y, alt),
+            RectSide(master, x, y, alt),
+            RectSide(master, x, y, alt),
+            RectSide(master, x, y, alt),
             RectPt(master, x, y, color),
             RectPt(master, x, y, color),
             RectPt(master, x, y, color),
@@ -45,6 +37,20 @@ class Rect(Obj):
         )
         self.addtags(master, self.ids[:1], Rect.TAGS[:1])
         self.addtags(master, self.ids, Rect.TAGS[-1:])
+
+    @staticmethod
+    def color(master, idn='current'):
+        return master.itemcget(idn, 'outline')
+
+    @staticmethod
+    def recolor(master, color, idn='current'):
+        ids = Rect.members(master, 'current')
+        master.itemconfigure(fill=color, outline=color)
+        alt = Obj.altcolor(master, color)
+        for sid in ids[1:5]:
+            master.itemconfigure(fill=alt)
+        for pid in ids[5:]:
+            RectPt.recolor(master, color, pid)
 
     @staticmethod
     def moveto(master, idns, l, t, r, b):
@@ -142,10 +148,11 @@ class RectSide(Obj):
     binds = bindings['RectSide']
     IDX = Obj.IDX + 2
     def __init__(self, master, x, y, color):
-        super(Obj, self).__init__(
+        super(RectSide, self).__init__(
             master, master.create_line(
                 x, y, x, y,
                 width=1, activewidth=5, fill=color))
+        self.addtags(master, self.ids, RectSide.TAGS)
 
     @staticmethod
     def snapto(widget, x, y, idn='current'):
@@ -153,10 +160,11 @@ class RectSide(Obj):
         Obj.snapto(widget, x, y, ((x1+x2)//2, (y1+y2)//2))
 
     @staticmethod
-    @binds.bind('<B1-Motion>')
+    @binds.bind('<B1-Motion>', '<Shift-B1-Motion>')
     def _moved(widget, x, y):
         ids = RectSide.members(widget, 'current')
         idx = ids.index(widget.find('withtag', 'current')[0], 1)
+        x, y = Obj.canvxy(widget, x, y)
         x1, y1, x2, y2 = widget.coords(ids[1 + (idx+1)%4])
         if idx == 1:
             Rect.moveto(widget, ids, x1, y, x2, y2)
@@ -170,15 +178,43 @@ class RectSide(Obj):
     @staticmethod
     @binds.bind('<Button-1>')
     def _select(widget, x, y):
-        Rect.selected(widget, RectPt.members(widget, 'current'))
-        snapto(widget, x, y)
+        Rect.selected(widget, RectSide.members(widget, 'current'))
+        RectSide.snapto(widget, x, y)
+
+    @staticmethod
+    @binds.bind('<Shift-Motion>', '<Shift-Leave>')
+    def _snapto(widget, x, y):
+        RectSide.snapto(widget, x, y)
+    binds.bind('<B1-Shift-Leave>')(' ')
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')
-    def _normalize(widget):
+    def _normalize(widget, x, y):
         ids = RectSide.members(widget, 'current')
         Rect.unselected(widget, ids)
-        # TODO normalize item order
+        idx = ids.index(widget.find('withtag', 'current')[0], 1)
+        x, y = Obj.canvxy(widget, x, y)
+        x1, y1, x2, y2 = widget.coords(ids[1 + (idx+1)%4])
+        swap = None
+        if idx == 1:
+            if y > y2:
+                swap = 1, 3
+        elif idx == 2:
+            if x < x1:
+                swap = 2, 4
+        elif idx == 3:
+            if y < y2:
+                swap = 1, 3
+        elif idx == 4:
+            if x > x1:
+                swap = 2, 4
+        if swap is not None:
+            s1, s2 = swap
+            widget.tag_raise(ids[s1], ids[s2-1])
+            widget.tag_raise(ids[s2], ids[s1-1])
+            ids = list(ids)
+            ids[s1], ids[s2] = ids[s2], ids[s1]
+        Rect.moveto(widget, ids, *widget.coords(ids[0]))
 
 class RectPt(Point):
     TAGS = ['RectPt']
@@ -193,6 +229,7 @@ class RectPt(Point):
     def _moved(widget, x, y):
         idns = RectPt.members(widget, 'current')
         idx = idns.index(widget.find('withtag', 'current')[0], 5)
+        x, y = Obj.canvxy(widget, x, y)
         x2, y2 = RectPt.data(widget, idns[5 + (idx - 3) % 4])
         if idx == 5:
             x1, y1 = x, y

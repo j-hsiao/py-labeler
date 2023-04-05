@@ -15,7 +15,6 @@ class Point(Obj):
     awidth = 10
     def __init__(self, master, x, y, color='black'):
         radius = self.radius
-        x, y = Point.canvxy(master, x, y)
         super(Point, self).__init__(
             master,
             master.create_oval(
@@ -61,7 +60,7 @@ class Point(Obj):
 
     @staticmethod
     def moveto(widget, x, y, idn='current'):
-        """Move Point to (x,y)."""
+        """Move Point to canvas coordinates (x,y)."""
         r = Point.radius
         widget.coords(idn, x-r, y-r, x+r, y+r)
 
@@ -75,6 +74,7 @@ class Point(Obj):
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')
     def _snapto(widget, x, y):
         Point.snapto(widget, x, y)
+    binds.bind('<B1-Shift-Leave>')(' ')
 
     @staticmethod
     @binds.bind('<Button-1>')
@@ -92,7 +92,7 @@ class Point(Obj):
             activewidth=Point.awidth)
 
     @staticmethod
-    @binds.bind('<B1-Motion>')
+    @binds.bind('<B1-Motion>', '<Shift-B1-Motion>')
     def _moveto(widget, x, y):
         nx, ny = Point.canvxy(widget, x, y)
         Point.moveto(widget, nx, ny)

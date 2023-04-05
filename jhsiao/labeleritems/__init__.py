@@ -34,6 +34,16 @@ class Obj(object):
             for the class.
         IDX: int
             The index of the idtag for the particular class.
+        HELP: a help message.
+    Subclasses should generally have an __init__ signature of
+    __init__(self, master, x, y, color) where x, y have already been
+    converted to canvas coordinates.
+
+    Regarding coordinates, there are window coordinates and canvas
+    coordinates.  Window coordinates are the coordinates directly
+    received from a callback.  Canvas coordinates convert the window
+    coordinates into coordinates in the canvas and differ when the
+    tk.Canvas is not scrolled to the top left.
     """
     TOP = 'top'
     TAGS = ['Obj']
@@ -43,6 +53,7 @@ class Obj(object):
 
     @staticmethod
     def register(item):
+        """Register `item` as a top-level Obj."""
         orig = Obj.classes.get(item.__name__)
         if orig is None:
             Obj.classes[item.__name__] = item
@@ -54,6 +65,7 @@ class Obj(object):
 
     @classmethod
     def idtag(cls, idn):
+        """Format the idtag for the class."""
         return cls.TAGS[-1].format(idn)
 
     def __init__(self, master, *ids):
@@ -84,7 +96,7 @@ class Obj(object):
 
     @staticmethod
     def toptag(master, idn):
-        """Get the toplevel Obj's tag."""
+        """Get the toplevel Obj's idtag."""
         tags = master.gettags(idn)
         idx = len(tags) - 1
         tag = tags[idx]
@@ -121,7 +133,15 @@ class Obj(object):
 
     @staticmethod
     def snapto(master, x, y, target):
-        """Snap mouse to target position."""
+        """Snap mouse to target position.
+
+        x, y: int
+            x, y mouse window coordinates.  These are required because
+            generating a mouse warp requires window coordinates rather
+            than canvas coordinates.
+        target: pair of int
+            The target coordinate to warp to in canvas coordinates.
+        """
         p = Obj.canvxy(master, x, y)
         if target != p:
             master.event_generate(
@@ -252,7 +272,11 @@ class BGImage(object):
             scrollregion=(0, 0, self.raw.width, self.raw.height))
 
     def roi(self, master):
-        """Show a roi."""
+        """Show a roi.
+
+        Resizing the entire image can take a huge amount of memory.
+        Resizing only a roi allows much better performance.
+        """
         l, r = master.xview()
         t, b = master.yview()
         if r - l == 1:
@@ -277,8 +301,10 @@ class BGImage(object):
     @staticmethod
     @binds.bind('<Button-1>')
     def _create(widget, x, y):
-        pass
-        #create
+        x, y = Obj.canvxy(widget, x, y)
+        return
+        # TODO
+        # select item class and instantiate
         #widget.event_generate('<ButtonRelease-1>', x, y)
         #widget.event_generate('<Button-1>', x, y)
 
@@ -297,8 +323,6 @@ class ObjSelector(tk.Frame, object):
         for cls in self.classes:
             self.lst.insert('end', cls)
 
-
-
 class Crosshairs(object):
     """Canvas crosshairs."""
     TAG = 'Crosshairs'
@@ -307,6 +331,7 @@ class Crosshairs(object):
         k = dict(
             state='disabled',
             tags=('Crosshairs',))
+        # add thicker black to back for contrast.
         self.idns = (
             master.create_line(0, 0, 1, 1, fill='black', width=3, **k),
             master.create_line(0, 0, 1, 1, fill='black', width=3, **k),
@@ -331,6 +356,8 @@ class Crosshairs(object):
         dx/dy: int
             Signed distance to an edge.
         vx, vy: vector direction.
+        cx, cy: int
+            canvas coordinates of mouse.
         """
         if vx:
             mx = (dx1 / vx, dx2 / vx)
