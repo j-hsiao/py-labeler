@@ -41,12 +41,12 @@ class Point(Obj):
             idn, **Point.colorkwargs(widget, color))
 
     @staticmethod
-    def data(widget, idn, fmt=None):
+    def data(widget, idn, info):
         l, t, r, b = widget.coords(idn)
         return (l+r)//2, (t+b)//2
 
     @staticmethod
-    def fromdict(widget, dct, fmt=None):
+    def fromdict(widget, dct, info):
         x, y = dct['data']
         return Point(widget, x, y, dct['color'])
 

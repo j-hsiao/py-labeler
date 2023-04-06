@@ -1,7 +1,6 @@
 """A rectangle (axis aligned)."""
 from __future__ import division
 __all__ = ['Rect']
-import os
 from . import Obj, bindings
 from .point import Point
 
@@ -9,12 +8,13 @@ from .point import Point
 class Rect(Obj):
     """A rectangle."""
     HELP = ' '.join((
-        'A Rectangle. Environment variable "RECTFMT" controls the data',
-        'format.  The default is "ltrb" which gives the left, top,',
-        'right, bottom coordinates.  Alternative values are "cxywh"',
-        'which gives the center x,y coordinates and width, height',
-        '"ltwh" which is top left x,y followed by width and height.'
+        'A Rectangle.  Multiple formats are supported.  The default is'
+        '"ltrb" which gives the left, top, right, bottom coordinates. '
+        'Alternative values are "cxywh" which gives the center x,y'
+        'coordinates and width, height', '"ltwh" which is top left x,y'
+        'followed by width and height.'
     ))
+    INFO = {'format': 'ltrb'}
     TAGS = ['Rect', 'Rect_{}']
     IDX = Obj.IDX + len(TAGS)
     binds = bindings['Rect']
@@ -66,7 +66,8 @@ class Rect(Obj):
         RectPt.moveto(master, l, b, idns[8])
 
     @staticmethod
-    def data(widget, idn, fmt=None):
+    def data(widget, idn, info):
+        fmt = info.get('format')
         l, t, r, b = widget.coords(idn)
         if fmt == 'cxywh':
             return (l+r)/2, (t+b)/2, r-l, b-t
@@ -76,7 +77,8 @@ class Rect(Obj):
             return l, t, r, b
 
     @staticmethod
-    def fromdict(widget, dct, fmt=None):
+    def fromdict(widget, dct, info):
+        fmt = info.get('format')
         if fmt == 'cxywh':
             x, y, w, h = dct['data']
             l = x - w/2

@@ -35,6 +35,7 @@ class Obj(object):
         IDX: int
             The index of the idtag for the particular class.
         HELP: a help message.
+        INFO: class-wide settings info.
     Subclasses should generally have an __init__ signature of
     __init__(self, master, x, y, color) where x, y have already been
     converted to canvas coordinates.
@@ -45,6 +46,7 @@ class Obj(object):
     coordinates into coordinates in the canvas and differ when the
     tk.Canvas is not scrolled to the top left.
     """
+    INFO = {}
     TOP = 'top'
     TAGS = ['Obj']
     IDX = 0
@@ -173,19 +175,22 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def data(widget, idn, fmt=None):
-        """Return a sequence of data represented by the Obj."""
+    def data(widget, idn, info):
+        """Return a sequence of data represented by the Obj.
+
+        info: the corresponding info instance.
+        """
         raise NotImplementedError
 
     @classmethod
-    def todict(cls, widget, idn, fmt=None):
+    def todict(cls, widget, idn, info):
         """Convert data to dict."""
         return dict(
             data=cls.data(widget, idn, fmt),
             color=cls.color(widget, idn))
 
     @staticmethod
-    def fromdict(widget, dct, fmt=None):
+    def fromdict(widget, dct, info):
         """Restore from a dict."""
         raise NotImplementedError
 
