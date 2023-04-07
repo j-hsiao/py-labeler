@@ -111,11 +111,13 @@ class Rect(Obj):
 
     @staticmethod
     def selected(widget, idns):
+        """Change when click/drag."""
         widget.itemconfigure(idns[0], fill='')
         Rect.deactivate(widget, idns)
 
     @staticmethod
     def unselected(widget, idns):
+        """Change when releasing click/drag."""
         widget.itemconfigure(
             idns[0], fill=widget.itemcget(idns[0], 'outline'))
         Rect.activate(widget, idns)
@@ -129,16 +131,16 @@ class Rect(Obj):
 
     @staticmethod
     @binds.bind('<B1-Motion>')
-    def _select(widget, x, y):
+    def _move(widget, x, y):
         l, t, r, b = widget.coords('current')
         ox = (l+r)//2
         oy = (t+b)//2
         nx, ny = Obj.canvxy(widget, x, y)
         dx = nx-ox
         dy = ny-oy
-        Rect.moveto(
-            widget, Rect.members(widget, 'current'),
-            l+dx, t+dy, r+dx, b+dy)
+        widget.move(
+            widget.gettags('current')[Rect.IDX],
+            dx, dy)
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')
@@ -232,7 +234,7 @@ class RectPt(Point):
         idns = RectPt.members(widget, 'current')
         idx = idns.index(widget.find('withtag', 'current')[0], 5)
         x, y = Obj.canvxy(widget, x, y)
-        x2, y2 = RectPt.data(widget, idns[5 + (idx - 3) % 4])
+        x2, y2 = RectPt.data(widget, idns[5 + (idx - 3) % 4], None)
         if idx == 5:
             x1, y1 = x, y
         elif idx == 6:
@@ -255,7 +257,7 @@ class RectPt(Point):
         idns = RectPt.members(widget, 'current')
         # Rect.moveto(widget, idns, *widget.coords(idns[0]))
         l, t, r, b = widget.coords(idns[0])
-        pts = [RectPt.data(widget, idn) for idn in idns[5:]]
+        pts = [RectPt.data(widget, idn, None) for idn in idns[5:]]
         reorder = [pts.index(p) for p in ((l, t), (r, t), (r,b), (l,b))]
         nidns = list(idns[:5])
         for nidx in reorder:
