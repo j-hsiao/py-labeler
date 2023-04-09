@@ -146,7 +146,7 @@ class Obj(object):
                 master.addtag(tag, 'withtag', idn)
 
     @staticmethod
-    def snapto(master, x, y, target, when='now'):
+    def snapto(master, x, y, target, when='head'):
         """Snap mouse to target position.
 
         x, y: int
@@ -349,7 +349,13 @@ class Crosshairs(object):
             master.create_line(0, 0, 1, 1, fill='white', width=1, **k))
         master.tag_raise('Crosshairs')
         master.configure(cursor='None')
-        self.up = (0, 1)
+        self._up = (0, 1)
+
+    def up(self, x, y):
+        if x or y:
+            self._up = (x, y)
+        else:
+            self._up = (0,1)
 
     @staticmethod
     def hide(master):
@@ -396,11 +402,13 @@ class Crosshairs(object):
         w = master.winfo_width()
         h = master.winfo_height()
         cx, cy = Obj.canvxy(master, x, y)
-        (x1,y1), (x2,y2) = self._edgepts(-x, w-x, -y, h-y, *self.up, cx, cy)
+        vx, vy = self._up
+        (x1,y1), (x2,y2) = self._edgepts(
+            -x, w-x, -y, h-y, vx, vy, cx, cy)
         idns = self.idns
         master.coords(idns[0], x1, y1, x2, y2)
         master.coords(idns[2], x1, y1, x2, y2)
         (x1,y1), (x2,y2) = self._edgepts(
-            -x, w-x, -y, h-y, self.up[1], -self.up[0], cx, cy)
+            -x, w-x, -y, h-y, vy, -vx, cx, cy)
         master.coords(idns[1], x1, y1, x2, y2)
         master.coords(idns[3], x1, y1, x2, y2)

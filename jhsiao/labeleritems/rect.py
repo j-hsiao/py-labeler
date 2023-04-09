@@ -188,10 +188,9 @@ class RectSide(Obj):
         RectSide.snapto(widget, x, y)
 
     @staticmethod
-    @binds.bind('<Shift-Motion>', '<Shift-Leave>', dobreak='True')
+    @binds.bind('<Shift-Motion>', '<Shift-Leave>')
     def _snapto(widget, x, y):
         RectSide.snapto(widget, x, y)
-        return 'break'
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')

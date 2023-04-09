@@ -25,7 +25,7 @@ class LCanv(tk.Frame, object):
     @staticmethod
     @canvbinds.bind('<Leave>')
     def _left(widget):
-        Crosshairs.show(widget)
+        Crosshairs.hide(widget)
 
     @staticmethod
     @canvbinds.bind('<Motion>')

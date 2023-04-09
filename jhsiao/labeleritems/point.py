@@ -71,10 +71,9 @@ class Point(Obj):
             widget, x, y, Point.data(widget, idn, None))
 
     @staticmethod
-    @binds.bind('<Shift-Motion>', '<Shift-Leave>', dobreak=True)
+    @binds.bind('<Shift-Motion>', '<Shift-Leave>')
     def _snapto(widget, x, y):
         Point.snapto(widget, x, y)
-        return 'break'
 
     @staticmethod
     @binds.bind('<Button-1>')
