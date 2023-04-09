@@ -164,7 +164,9 @@ class RectSide(Obj):
         Obj.snapto(widget, x, y, ((x1+x2)//2, (y1+y2)//2))
 
     @staticmethod
-    @binds.bind('<B1-Motion>', '<Shift-B1-Motion>')
+    @binds.bind(
+        '<B1-Motion>', '<Shift-B1-Motion>',
+        '<B1-Leave>', '<Shift-B1-Leave>')
     def _moved(widget, x, y):
         ids = RectSide.members(widget, 'current')
         idx = ids.index(widget.find('withtag', 'current')[0], 1)
@@ -186,10 +188,10 @@ class RectSide(Obj):
         RectSide.snapto(widget, x, y)
 
     @staticmethod
-    @binds.bind('<Shift-Motion>', '<Shift-Leave>')
+    @binds.bind('<Shift-Motion>', '<Shift-Leave>', dobreak='True')
     def _snapto(widget, x, y):
         RectSide.snapto(widget, x, y)
-    binds.bind('<B1-Shift-Leave>')(' ')
+        return 'break'
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')

@@ -71,10 +71,10 @@ class Point(Obj):
             widget, x, y, Point.data(widget, idn, None))
 
     @staticmethod
-    @binds.bind('<Shift-Motion>', '<Shift-Leave>')
+    @binds.bind('<Shift-Motion>', '<Shift-Leave>', dobreak=True)
     def _snapto(widget, x, y):
         Point.snapto(widget, x, y)
-    binds.bind('<B1-Shift-Leave>')(' ')
+        return 'break'
 
     @staticmethod
     @binds.bind('<Button-1>')
@@ -92,7 +92,9 @@ class Point(Obj):
             activewidth=Point.awidth)
 
     @staticmethod
-    @binds.bind('<B1-Motion>', '<Shift-B1-Motion>')
+    @binds.bind(
+        '<B1-Motion>', '<Shift-B1-Motion>',
+        '<B1-Leave>', '<Shift-B1-Leave>')
     def _moveto(widget, x, y):
         nx, ny = Point.canvxy(widget, x, y)
         Point.moveto(widget, nx, ny)

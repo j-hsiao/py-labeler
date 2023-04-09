@@ -65,11 +65,6 @@ class Obj(object):
                 orig, 'vs', item, file=sys.stderr)
         return item
 
-    @classmethod
-    def idtag(cls, idn):
-        """Format the idtag for the class."""
-        return cls.TAGS[-1].format(idn)
-
     def __init__(self, master, *ids):
         self.ids = []
         for idn in ids:
@@ -90,11 +85,14 @@ class Obj(object):
         return master.find('withtag', Obj.TOP)
 
     @staticmethod
-    def topitems(master):
-        """Return tuples of (classname, itemid) for top-level Objs."""
-        return [
-            Obj.parsetag(Obj.toptag(master, idn))
-            for idn in master.find('withtag', Obj.TOP)]
+    def parsetag(tag):
+        """Parse an Obj tag into class and index."""
+        cls, idn = tag.split('_', 1)
+        return cls, int(idn)
+
+    @staticmethod
+    def parseid(tag):
+        return int(tag.rsplit('_', 1)[-1])
 
     @staticmethod
     def toptag(master, idn):
@@ -108,15 +106,29 @@ class Obj(object):
         return tag
 
     @staticmethod
-    def parsetag(tag):
-        """Parse an Obj tag into class and index."""
-        cls, idn = tag.split('_', 1)
-        return cls, int(idn)
-
-    @staticmethod
     def topid(master, idn):
         """Get the toplevel Obj's item id."""
         return int(Obj.toptag(master, idn).split('_', 1)[-1])
+
+    @staticmethod
+    def topitems(master):
+        """Return tuples of (classname, itemid) for top-level Objs."""
+        return [
+            Obj.parsetag(Obj.toptag(master, idn))
+            for idn in master.find('withtag', Obj.TOP)]
+
+    @classmethod
+    def idtag(cls, master, idn):
+        """Extract the class id tag."""
+        return master.gettags(idn)[cls.IDX]
+
+    @classmethod
+    def members(cls, widget, idn, idx=None):
+        """Find the member idns of this Obj class."""
+        if idx is None:
+            idx = cls.IDX
+        return widget.find('withtag', widget.gettags(idn)[idx])
+
 
     @staticmethod
     def addtags(master, ids, tags):
@@ -134,7 +146,7 @@ class Obj(object):
                 master.addtag(tag, 'withtag', idn)
 
     @staticmethod
-    def snapto(master, x, y, target):
+    def snapto(master, x, y, target, when='now'):
         """Snap mouse to target position.
 
         x, y: int
@@ -150,7 +162,7 @@ class Obj(object):
                 '<Motion>',
                 x=x+(target[0]-p[0]),
                 y=y+(target[1]-p[1]),
-                warp=True, when='head')
+                warp=True, when=when)
 
     @staticmethod
     def canvxy(master, x, y):
@@ -207,13 +219,6 @@ class Obj(object):
     def deactivate(widget, ids):
         """Opposite of activate."""
         raise NotImplemented
-
-    @classmethod
-    def members(cls, widget, idn, idx=None):
-        """Find the member idns of this Obj class."""
-        if idx is None:
-            idx = cls.IDX
-        return widget.find('withtag', widget.gettags(idn)[idx])
 
     # General Obj behavior
     @staticmethod

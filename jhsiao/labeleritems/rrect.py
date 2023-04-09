@@ -14,7 +14,15 @@ def perpleft(vx, vy):
 
     This vector takes into consideration that larger y is down.
     """
-    return vy, -vx
+    if vx or vy:
+        return vy, -vx
+    else:
+        return -1, 0
+
+def norm(vec):
+    m = veclen(*vec)
+    return vec[0]/m, vec[1]/m
+
 
 @Obj.register
 class RRect(Obj):
@@ -41,10 +49,12 @@ class RRect(Obj):
         super(RRect, self).__init__(
             master,
             master.create_polygon(
-                x,y,x,y,x,y,x,y, fill=color, outline=color,
+                x-5,y,x+5,y,x+5,y,x-5,y, fill=color, outline=color,
                 stipple='gray12', activestipple='gray25'),
-            RRectPt(master, x, y, color),
-            RRectPt(master, x, y, color),
+            master.create_line(x,y,x,y, fill=alt),
+            master.create_line(x,y,x,y, fill=alt),
+            RRectVSide(master, x, y, alt),
+            RRectVSide(master, x, y, alt),
             master.create_line(x,y,x,y, fill=alt, arrow='last', state='disabled'),
         )
         self.addtags(master, self.ids[:1], RRect.TAGS[:1])
@@ -60,6 +70,58 @@ class RRect(Obj):
         alt = Obj.altcolor(master, color)
         master.itemconfigure(ids[0], fill=color, outline=color)
         # TODO
+
+    @staticmethod
+    def parse_axis(ax1, ay1, vx, vy, left, right):
+        """Calculate xy coordinates from axis data."""
+        ax2, ay2 = ax1 + vx, ay1 + vy
+        ux, uy = norm(perpleft(vx, vy))
+        x1, y1 = ax2 + ux*left, ay2 + uy*left
+        x2, y2 = ax2 - ux*right, ay2 - uy*right
+        x3, y3 = x2 - vx, y2 - vy
+        x4, y4 = x1 - vx, y1 - vy
+        return x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2
+
+    @staticmethod
+    def parse_corners(x1, y1, x2, y2, x3, y3, x4, y4, left)
+        """Calculate xy coordinates from corners data."""
+        ux, uy = norm(x2-x1, y2-y1)
+        ux *= left
+        uy *= left
+        return (
+            x1, y1, x2, y2, x3, y3, x4, y4,
+            x4 + ux, y4 + uy, x1 + ux, y1 + uy)
+
+    @staticmethod
+    def parse_cxywhal(cx, cy, w, h, a, l, **info):
+        if info.get('angle') == 'degrees':
+            a *= math.pi / 180
+        ux, uy = math.cos(a)*.5, math.sin(a)*.5
+        wx, wy = ux*.5, uy*.5
+        hx, hy = perpleft(wx, wy)
+        wx *= w
+        wy *= w
+        hx *= h
+        hy *= h
+        tx, ty = cx + hx, cy + hy
+        bx, by = cx - hx, cy - hy
+        x1, y1 = tx - wx, ty - wy
+        x2, y2 = tx + wx, ty + wy
+        x3, y3 = bx + wx, by + wy
+        x4, y4 = bx - wx, by - wy
+        ax2, ay2 = x1 + ux*l, y1+uy*l
+        ax1, ay1 = x4 + ux*l, y4+uy*l
+        return x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2
+
+
+    def draw(
+        widget, ids, x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2):
+        widget.coords(ids[0], x1, y1, x2, y2, x3, y3, x4, y4)
+        widget.coords(ids[1], x4, y4, x1, y1)
+        widget.coords(ids[2], x2, y2, x3, y3)
+        widget.coords(ids[3], x3, y3, x4, y4)
+        widget.coords(ids[4], x1, y1, x2, y2)
+        widget.coords(ids[5], ax1, ay1, ax2, ay2)
 
     @staticmethod
     def data(widget, idn, info):
@@ -89,50 +151,13 @@ class RRect(Obj):
     def fromdict(widget, dct, info):
         fmt = info.get('format')
         if fmt == 'corners':
-            x1, y1, x2, y2, x3, y3, x4, y4, l = info['data']
-            vx, vy = x2-x1, y2-y1
-            width = veclen(vx, vy)
-            scale = l / width
-            ax2 = x1 + vx*scale
-            ay2 = y1 + vy*scale
-            ax1 = x4 + vx*scale
-            ay1 = y4 + vy*scale
+            coords = RRect.parse_corners(*dct['data'])
         elif fmt == 'axis':
-            ax1, ay1, vx, vy, left, right = info['data']
-            ax2 = ax1 + vx
-            ay2 = ay1 + vy
-            ux, uy = perpleft(vx, vy)
-            m = veclen(ux, uy)
-            ux /= m
-            uy /= m
-            x1 = ax2 + ux*left
-            y1 = ay2 + uy*left
-            x2 = ax2 - ux*right
-            y2 = ay2 - uy*right
-            x3 = x2-vx
-            y3 = y2-vy
-            x4 = x1-vx
-            y4 = y1-vy
+            coords = RRect.parse_axis(*dct['data'])
         else:
-            cx, cy, w, h, a, l = info['data']
-            if info.get('angle') == 'degrees':
-                a *= math.pi / 180
-            ux, uy = math.cos(a)*.5, math.sin(a)*.5
-            wx, wy = ux*.5, uy*.5
-            hx, hy = perpleft(wx, wy)
-            wx *= w
-            wy *= w
-            hx *= h
-            hy *= h
-            tx, ty = cx + hx, cy + hy
-            bx, by = cx - hx, cy - hy
-            x1, y1 = tx - wx, ty - wy
-            x2, y2 = tx + wx, ty + wy
-            x3, y3 = bx + wx, by + wy
-            x4, y4 = bx - wx, by - wy
-            ax2, ay2 = x1 + ux*l, y1+uy*l
-            ax1, ay1 = x4 + ux*l, y4+uy*l
-        # TODO
+            coords = RRect.parse_cxywhal(*dct['data'], **info)
+        RRect(widget, x, y, dct['color'])
+        RRect.draw(widget, *coords)
 
     @staticmethod
     def activate(widget, ids):
@@ -156,7 +181,7 @@ class RRect(Obj):
 
     @staticmethod
     @binds.bind('<Button-1>')
-    def _selected(widget, x, y):
+    def _select(widget, x, y):
         ids = RRect.members(widget, 'current')
         RRect.selected(widget, ids)
         x1, y1, x2, y2, x3, y3, x4, y4 = widget.coords(ids[0])
@@ -175,10 +200,60 @@ class RRect(Obj):
         dy = ny-cy
         widget.move(widget.gettags('current')[RRect.IDX], dx, dy)
 
+    @staticmethod
+    @binds.bind('<ButtonRelease-1>')
+    def _unselect(widget):
+        RRect.unselected(widget, RRect.members(widget, 'current')
 
 
+class RRectVSide(Obj):
+    TAGS = ['RRectVSide']
+    IDX = Obj.IDX + 2
+    binds = bindings['RRectVSide']
+    def __init__(self, master, x, y, color='black'):
+        super(RRectVSide, self).__init__(
+            master,
+            master.create_line(
+                x, y, x, y,
+                fill=color, width=1, activewidth=5))
+        self.addtags(master, self.ids, RRectVSide.TAGS)
 
+    @staticmethod
+    def snapto(widget, x, y, idn='current'):
+        ids = RRectVSide.members(widget)
+        idn = widget.find('withtag', idn)
+        ax1, ay1, ax2, ay2 = widget.coords(ids[-1])
+        if ids.index(idn) == 3:
+            Obj.snapto(widget, x, y, (ax1, ay1))
+        else:
+            Obj.snapto(widget, x, y, (ax2, ay2))
 
+    @staticmethod
+    @binds.bind('<Shift-Motion>', '<Shift-Leave>', dobreak=True)
+    def _snapto(widget, x, y):
+        RRectVSide.snapto(widget, x, y)
+        return 'break'
 
+    @staticmethod
+    @binds.bind('<Button-1>')
+    def _select(widget, x, y):
+        ids = RRectVSide.members(widget, 'current')
+        RRect.selected(widget, ids)
+        RRectVSide.snapto(widget, x, y)
 
-
+    @staticbind
+    @binds.bind(
+        '<B1-Motion>','<Shift-B1-Motion>',
+        '<B1-Leave>', '<Shift-B1-Leave>')
+    def _moved(widget, x, y):
+        x, y = Obj.canvxy(widget, x, y)
+        ids = RRectVSide.members(widget)
+        idn = widget.find('withtag', idn)
+        x1, y1, x2, y2, x3, y3, x4, y4 = widget.coords(ids[0])
+        ax1, ay1, ax2, ay2 = widget.coords(ids[-1])
+        left = veclen(x1-ax2, y1-ay2)
+        right = veclen(x2-ax2, y2-ay2)
+        if ids.index(idn) == 3:
+            ax1, ay1 = x, y
+        else:
+            ax2, ay2 = x, y
