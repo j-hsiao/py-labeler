@@ -50,8 +50,7 @@ class DictItem(tk.Frame):
 
     def set(self, key, val):
         """Set key,val of DictItem."""
-        self.key.delete(0, 'end')
-        self.value.delete(0, 'end')
+        self.clear()
         self.key.insert(0, repr(key))
         self.value.insert(0, repr(val))
 
@@ -184,6 +183,19 @@ class Dict(tk.Frame):
             if i is not None:
                 ret[i[0]] = i[1]
         return ret
+
+    def set(self, dct):
+        """Set the DictItem entries to the values of the `dct`."""
+        nitems = len(dct)
+        cur = self.dframe.grid_size()[1]
+        if nitems > cur:
+            for i in range(nitems-cur):
+                self.add_item()
+        else:
+            for i in range(cur-nitems):
+                self.rm_item()
+        for i, (k, v) in enumerate(dct.items()):
+            self.dframe.grid_slaves(row=i)[0].set(k, v)
 
     def add_item(self, idx=None):
         """Add a new dict item and set focus."""

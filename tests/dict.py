@@ -11,6 +11,9 @@ def test_dict():
     d = Dict(r)
     d.grid(row=0, column=0, sticky='nsew')
 
+    d.set(
+        dict(a=1, b=1.34, c=[1,2,3], d=(1,'hello'), e='everyone'))
+
     def check():
         print(d.dict())
     b = tk.Button(r, text='check')
