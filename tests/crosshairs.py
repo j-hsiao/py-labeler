@@ -1,4 +1,4 @@
-from jhsiao.labeleritems import Crosshairs
+from jhsiao.labeler.objs import Crosshairs
 from jhsiao.tkutil import tk
 
 def test_crosshairs():

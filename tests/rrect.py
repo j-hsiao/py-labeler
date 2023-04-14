@@ -1,7 +1,7 @@
 from jhsiao.labeler import bindings as wbinds
 from jhsiao.labeler.canvas import LCanv
-from jhsiao.labeleritems import bindings, Crosshairs
-from jhsiao.labeleritems.rrect import RRect
+from jhsiao.labeler.objs import bindings, Crosshairs
+from jhsiao.labeler.objs.rrect import RRect
 from jhsiao.tkutil import tk
 
 def test_rrect():

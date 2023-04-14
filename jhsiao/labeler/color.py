@@ -1,16 +1,26 @@
 """Color picker."""
 from __future__ import division
+import base64
+
+import cv2
+import numpy as np
+
 from jhsiao.tkutil import tk
 from jhsiao.tkutil.bindings import scopes
 from . import bindings
 
-
 def hsv2rgb(h, s, v):
+    """Convert hsv to rgb.
+
+    h: 0-360
+    s: 0-1
+    v: 0-255
+    """
     div = h / 60
     delta = s*v
     m = v - delta
     if 0 <= div < 1:
-        return v, m, div*delta+m
+        return v, div*delta+m, m
     elif div < 2:
         return (2-div)*delta + m, v, m
     elif div < 3:
@@ -23,6 +33,10 @@ def hsv2rgb(h, s, v):
         return v, m, (6-div)*delta + m
 
 def rgb2hsv(r, g, b):
+    """Convert rgb to hsv.
+
+    r,g,b, 0-255
+    """
     V = max(r, g, b)
     m = min(r, g, b)
     delta = (V-m)
@@ -41,7 +55,41 @@ def rgb2hsv(r, g, b):
         H = 0
     return H, S, V
 
+def make_sv_palette(hue, out=None):
+    """Make saturation/value image for hue.
 
+    x axis is saturation.
+    y axis is value.
+    """
+    if out is None:
+        out = np.empty((256,256,3), np.uint8)
+    for V in range(256):
+        for S in range(256):
+            out[255-V, S, ::-1] = hsv2rgb(hue, S/255, V)
+    return out
+
+def make_hue_palette():
+    im = np.empty((360, 30, 3), np.uint8)
+    for h in range(360):
+        im[h,:,::-1] = hsv2rgb(359-h, 1, 255)
+    return im
+
+def draw_sv_selection(im, sat, val, dim):
+    x = int(sat*(dim-1))
+    y = int((dim/255) * (255-val))
+    out = cv2.resize(im, (dim, dim))
+    cv2.circle(out, (x, y), 5, (0,0,0), 2)
+    cv2.circle(out, (x, y), 5, (255,255,255), 1)
+    succ, data = cv2.imencode('.png', out)
+    return base64.b64encode(data)
+
+def draw_h_selection(im, h, dim):
+    out = cv2.resize(im, (30, dim))
+    px = int(dim * (h / 360))
+    roi = out[max(0, px-2):px+3]
+    np.multiply(roi, .8, dtype=np.float32, out=roi, casting='unsafe')
+    succ, data = cv2.imencode('.png', out)
+    return base64.b64encode(data)
 
 @bindings(scope=scopes.Validation)
 def intvalidate(widget, current, pending):
@@ -51,7 +99,8 @@ def intvalidate(widget, current, pending):
         except ValueError:
             return False
     else:
-        # force variable to 0 when cleared
+        # force variable to 0 when cleared. Using entry.delete
+        # causes an exception, but backspace seems to be fine.
         if current != '0':
             widget.event_generate('<BackSpace>', when='head')
             widget.event_generate('<0>', when='head')
@@ -161,7 +210,37 @@ class HSVColorPicker(tk.Toplevel, object):
         color: str: the starting color
         """
         super(HSVColorPicker, self).__init__(*args, **kwargs)
+        self.title('Choose HSV color')
+        self.attributes('-topmost', True)
         r, g, b = parse_color(self, color)
+        h, s, v = rgb2hsv(r, g, b)
+        self.svpalette = make_sv_palette(h)
+        self.hpalette = make_hue_palette()
+        self.svim = tk.PhotoImage(
+            master=self, format='png',
+            data=draw_sv_selection(self.svpalette, s, v, 360))
+        self.him = tk.PhotoImage(
+            master=self, format='png',
+            data=draw_h_selection(self.hpalette, h, 360))
+        svl = tk.Label(self, image=self.svim)
+        svl.grid(row=1, column=0)
+        hl = tk.Label(self, image=self.him)
+        hl.grid(row=1, column=1)
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        self._value = tk.StringVar(self, value=str(v))
+        self._saturation = tk.StringVar(self, value=str(s))
+        self._hue = tk.StringVar(self, value=str(v))
+
+    def __call__(self):
+        self.wait_window()
+
+
+
+
+
 
 
 class ColorPicker(tk.Frame, object):

@@ -1,7 +1,7 @@
 from jhsiao.tkutil import tk
 from . import bindings
-from jhsiao.labeleritems import bindings as itembindings
-from jhsiao.labeleritems import Crosshairs, BGImage
+from .objs import bindings as itembindings
+from .objs import Crosshairs, BGImage
 
 class LCanv(tk.Frame, object):
     canvbinds = bindings['LCanv.canv']
@@ -15,6 +15,8 @@ class LCanv(tk.Frame, object):
 
         self.canv.grid(row=0, column=0)
         self.canv.configure(background='blue')
+
+    canvbinds.bind('<B1-Leave>', '<B1-Enter>')(' ')
 
     @staticmethod
     @canvbinds.bind('<Enter>')

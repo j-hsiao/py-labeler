@@ -1,4 +1,4 @@
-from jhsiao.labeleritems import point, bindings, BGImage
+from jhsiao.labeler.objs import point, bindings, BGImage
 from jhsiao.tkutil import tk
 
 
