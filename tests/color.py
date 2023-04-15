@@ -1,4 +1,7 @@
-from __future__ import division
+from __future__ import division, print_function
+import timeit
+import cv2
+
 from jhsiao.labeler.color import (
     tk,
     ColorPicker,
@@ -6,7 +9,7 @@ from jhsiao.labeler.color import (
     RGBColorPicker,
     HSVColorPicker,
     hsv2rgb,
-    rgb2hsv
+    rgb2hsv,
 )
 
 
@@ -17,11 +20,11 @@ def test_rgb():
     print(color)
     r.destroy()
 
-
 def test_hsv():
     r = tk.Tk()
     bindings.apply(r)
     color = HSVColorPicker('pink', r)()
+    print(color)
     r.destroy()
 
 def test_colorpalette():
