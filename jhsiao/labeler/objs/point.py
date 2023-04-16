@@ -8,6 +8,7 @@ class Point(Obj):
     HELP = 'A point. (x, y)'
     TAGS = ['Point', 'Point_{}']
     IDX = Obj.IDX  + len(TAGS)
+    IDNS = 1
 
     binds = bindings['Point']
 

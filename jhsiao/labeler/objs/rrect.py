@@ -45,6 +45,7 @@ class RRect(Obj):
     INFO = {'format': 'cxywha', 'angle': 'radians'}
     TAGS = ['RRect', 'RRect_{}']
     IDX = Obj.IDX + len(TAGS)
+    IDNS = 6
     binds = bindings['RRect']
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)

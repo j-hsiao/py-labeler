@@ -17,6 +17,7 @@ class Rect(Obj):
     INFO = {'format': 'ltrb'}
     TAGS = ['Rect', 'Rect_{}']
     IDX = Obj.IDX + len(TAGS)
+    IDNS = 9
     binds = bindings['Rect']
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)

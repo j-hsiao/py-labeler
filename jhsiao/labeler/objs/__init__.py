@@ -52,6 +52,7 @@ class Obj(object):
     IDX = 0
     binds = bindings['Obj']
     classes = dict()
+    IDNS = 0
 
     @staticmethod
     def register(item):
