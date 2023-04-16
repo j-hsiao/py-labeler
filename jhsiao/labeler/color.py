@@ -57,17 +57,20 @@ def rgb2hsv(r, g, b):
         H = 0
     return H, S, V
 
-def make_sv_palette(hue, out=None, dim=256):
-    """Make saturation/value image for hue.
+def make_sv_palette(hue, out=None, width=256, height=256):
+    """Make saturation/value image for a particular hue.
 
-    out should be square if given
     x axis is saturation.
-    y axis is value.
+    y axis is value. top is 255, bottom is 0
+
+    hue: 0-6
+    out should be square if given.  Otherwise a new array is allocated
+    with shape (dim, dim, 3)
     """
     if out is None:
-        out = np.empty((dim, dim, 3), np.uint8)
+        out = np.empty((height, width, 3), np.uint8)
     else:
-        dim = out.shape[0]
+        height, width = out.shape[:2]
     if hue < 1:
         hi, mid, lo = 2, 1, 0
     elif hue < 2:
@@ -87,9 +90,11 @@ def make_sv_palette(hue, out=None, dim=256):
     r = hue-q
     if q % 2:
         r = 1 - r
-    s = np.divide(np.arange(dim, dtype=np.uint16), dim-1, dtype=np.float32)
-    v = np.empty(dim, np.uint8)
-    np.multiply(s[::-1], 255, dtype=np.float32, out=v, casting='unsafe')
+    s = np.divide(
+        np.arange(width, dtype=np.uint16), width-1, dtype=np.float32)
+    v = np.divide(
+        np.arange(height, dtype=np.uint16)[::-1], height-1, dtype=np.float32)
+    v *= 255
     np.multiply(
         s, v[:,None], dtype=np.float32, out=mid, casting='unsafe')
     hi[:] = v[:,None]
@@ -109,6 +114,11 @@ hueidxs = (
 )
 
 def make_hue_palette(out=None, dim=360):
+    """Create virtual hue selection image.
+
+    out: output array, takes priority over dim.
+    dim: output height.
+    """
     if out is None:
         out = np.empty((dim, 30, 3), np.uint8)
     else:
@@ -158,24 +168,8 @@ def draw_h_selection(im, y):
     roi[...] = bak
     return ret
 
-@bindings(scope=scopes.Validation, data=(None, int))
-def intvalidate(widget, current, pending, data=None):
-    if pending:
-        try:
-            ival = int(pending)
-        except ValueError:
-            return False
-        if data is not None and ival > data:
-            widget.setvar(widget.cget('textvariable'), data)
-            widget.after_idle(
-                lambda: widget.configure(validate='key'))
-    else:
-        # force variable to 0 when cleared. Using entry.delete
-        # causes an exception, but backspace seems to be fine.
-        if current != '0':
-            widget.event_generate('<BackSpace>', when='head')
-            widget.event_generate('<0>', when='head')
-    return True
+fstr = '{:.3f}'.format
+
 
 def parse_color(widget, color):
     """Convert general color into r, g, b"""
@@ -190,22 +184,19 @@ def format_color(r, g, b):
     """Format rgb tuple into #RRGGBB color string."""
     return '#{:02x}{:02x}{:02x}'.format(r, g, b)
 
-class RGBColorPicker(tk.Toplevel, object):
+class RGB(tk.Frame, object):
     def __init__(self, color, *args, **kwargs):
         """Create a toplevel to select a color via rgb.
 
         color: str: The starting color. 
         """
-        super(RGBColorPicker, self).__init__(*args, **kwargs)
+        self.change_origin = kwargs.pop('change_origin', self)
+        super(RGB, self).__init__(*args, **kwargs)
         r, g, b = parse_color(self, color)
-        self.title('Choose RGB color.')
-        self.attributes('-topmost', True)
+        self.orig = color
         self.configure(background=color)
-        self.grid_columnconfigure(0, minsize=100)
-        self.grid_columnconfigure(2, weight=1, minsize=100)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1, minsize=100)
         self.red = tk.StringVar(self, value=str(r))
         self.green = tk.StringVar(self, value=str(g))
         self.blue = tk.StringVar(self, value=str(b))
@@ -217,7 +208,7 @@ class RGBColorPicker(tk.Toplevel, object):
         self.r = tk.Scale(self, variable=self.red, **kwargs)
         self.g = tk.Scale(self, variable=self.green, **kwargs)
         self.b = tk.Scale(self, variable=self.blue, **kwargs)
-        valcmd = str(intvalidate.update(data=(str(255), int)))
+        valcmd = str(self.intvalidate.update(data=(str(255), int)))
         self.re = tk.Entry(
             self, textvariable=self.red,
             validate='key', validatecommand=valcmd)
@@ -230,63 +221,67 @@ class RGBColorPicker(tk.Toplevel, object):
         self.rl = tk.Label(self, text='r')
         self.gl = tk.Label(self, text='g')
         self.bl = tk.Label(self, text='b')
-        self.rl.grid(row=0, column=1, sticky='nsew')
-        self.gl.grid(row=1, column=1, sticky='nsew')
-        self.bl.grid(row=2, column=1, sticky='nsew')
-        self.r.grid(row=0, column=2, sticky='nsew')
-        self.g.grid(row=1, column=2, sticky='nsew')
-        self.b.grid(row=2, column=2, sticky='nsew')
-        self.re.grid(row=0, column=3, sticky='nsew')
-        self.ge.grid(row=1, column=3, sticky='nsew')
-        self.be.grid(row=2, column=3, sticky='nsew')
-        self.bindtags(('RGBColorPicker',)+self.bindtags())
-        self.re.bindtags(('RGBColorPicker',)+self.re.bindtags())
-        self.ge.bindtags(('RGBColorPicker',)+self.ge.bindtags())
-        self.be.bindtags(('RGBColorPicker',)+self.be.bindtags())
-        self.grab_set()
-
-    def __call__(self):
-        """Wait until color picked and window closed."""
-        self.wait_window()
-        return self._color
-
-    def destroy(self):
-        self.grab_release()
-        self._color = self.cget('background')
-        super(RGBColorPicker, self).destroy()
-
-    @staticmethod
-    @bindings['RGBColorPicker'].bind('<Escape>', dobreak='True')
-    def _close(widget):
-        widget.winfo_toplevel().destroy()
-        return 'break'
+        self.rl.grid(row=1, column=0, sticky='nsew')
+        self.gl.grid(row=2, column=0, sticky='nsew')
+        self.bl.grid(row=3, column=0, sticky='nsew')
+        self.r.grid(row=1, column=1, sticky='nsew')
+        self.g.grid(row=2, column=1, sticky='nsew')
+        self.b.grid(row=3, column=1, sticky='nsew')
+        self.re.grid(row=1, column=2, sticky='nsew')
+        self.ge.grid(row=2, column=2, sticky='nsew')
+        self.be.grid(row=3, column=2, sticky='nsew')
 
     def color(self):
-        r = self.red.get()
-        g = self.green.get()
-        b = self.blue.get()
-        r = clip(int(r) if r else 0, 0, 255)
-        g = clip(int(g) if g else 0, 0, 255)
-        b = clip(int(b) if b else 0, 0, 255)
-        return format_color(r,g,b)
+        """Return tk string var"""
+        return self.cget('background')
 
     @bindings(scope=scopes.Trace)
     def onchange(widget, var, index, op):
-        widget.configure(background=widget.color())
+        r = widget.red.get()
+        g = widget.green.get()
+        b = widget.blue.get()
+        r = clip(int(r) if r else 0, 0, 255)
+        g = clip(int(g) if g else 0, 0, 255)
+        b = clip(int(b) if b else 0, 0, 255)
+        widget.configure(background=format_color(r,g,b))
+        widget.change_origin.event_generate(
+            '<<ColorChange>>', when='head')
 
-class HSVColorPicker(tk.Toplevel, object):
+    @bindings(scope=scopes.Validation, data=(None, int))
+    def intvalidate(widget, current, pending, data=None):
+        if pending:
+            try:
+                ival = int(pending)
+            except ValueError:
+                return False
+            if data is not None and ival > data:
+                widget.setvar(widget.cget('textvariable'), data)
+                widget.after_idle(
+                    lambda: widget.configure(validate='key'))
+            elif pending.startswith('0') and len(pending) > 1:
+                for end in range(len(pending)):
+                    if pending[end] != '0':
+                        break
+                widget.after_idle(widget.delete, 0, end)
+        else:
+            # force variable to 0 when cleared. Using entry.delete
+            # causes an exception, but backspace seems to be fine.
+            if current != '0':
+                widget.event_generate('<BackSpace>', when='head')
+                widget.event_generate('<0>', when='head')
+        return True
+
+class HSV(tk.Frame, object):
     def __init__(self, color, *args, **kwargs):
         """Create a toplevel to select color via hsv.
 
         color: str: the starting color
         """
-        super(HSVColorPicker, self).__init__(*args, **kwargs)
-        self.title('Choose HSV color')
-        self.attributes('-topmost', True)
+        self.change_origin = kwargs.pop('change_origin', self)
+        super(HSV, self).__init__(*args, **kwargs)
+        self.grid_rowconfigure(0, minsize=100, weight=1)
+        self.grid_columnconfigure(0, minsize=2, weight=1)
         self.configure(background=color)
-        self.grid_rowconfigure(0, minsize=361)
-        self.grid_columnconfigure(0, minsize=361)
-
         r, g, b = parse_color(self, color)
         h, s, v = rgb2hsv(r, g, b)
         self.svpalette = make_sv_palette(h)
@@ -297,17 +292,32 @@ class HSVColorPicker(tk.Toplevel, object):
             self, image=self.svim, highlightthickness=0, borderwidth=0)
         hl = tk.Label(
             self, image=self.him, highlightthickness=0, borderwidth=0)
-        svl.bindtags(('HSVColorPicker.sv',)+svl.bindtags())
-        hl.bindtags(('HSVColorPicker.h',)+hl.bindtags())
+        svl.bindtags(('HSV.sv',)+svl.bindtags())
+        hl.bindtags(('HSV.h',)+hl.bindtags())
         hlabel = tk.Label(self, text='h:')
         slabel = tk.Label(self, text='s:')
         vlabel = tk.Label(self, text='v:')
-        self.hentry = tk.Entry(self)
-        self.sentry = tk.Entry(self)
-        self.ventry = tk.Entry(self)
-        self.hentry.insert(0, str(int(h*60)))
-        self.sentry.insert(0, str(int(s*100)))
-        self.ventry.insert(0, str(int(v)))
+        self.hentry = tk.Entry(self, validate='key')
+        self.sentry = tk.Entry(self, validate='key')
+        self.ventry = tk.Entry(self, validate='key')
+        self.hentry.configure(
+            validatecommand=str(
+                self.floatvalidate.update(
+                    widget=(str(self.hentry),None),
+                    data=(str(360),float))))
+        self.sentry.configure(
+            validatecommand=str(
+                self.floatvalidate.update(
+                    widget=(str(self.sentry),None),
+                    data=(str(1.0),float))))
+        self.ventry.configure(
+            validatecommand=str(
+                self.floatvalidate.update(
+                    widget=(str(self.ventry),None),
+                    data=(str(1.0),float))))
+        self.hentry.insert(0, fstr(h*60))
+        self.sentry.insert(0, fstr(s))
+        self.ventry.insert(0, fstr(v/255))
         svl.grid(row=0, column=0, sticky='nsew', rowspan=4)
         hl.grid(row=0, column=1, sticky='nsew', rowspan=4)
         hlabel.grid(row=1, column=2, sticky='nsew')
@@ -316,69 +326,81 @@ class HSVColorPicker(tk.Toplevel, object):
         self.hentry.grid(row=1, column=3, sticky='nsew')
         self.sentry.grid(row=2, column=3, sticky='nsew')
         self.ventry.grid(row=3, column=3, sticky='nsew')
+        svl.configure(width=200, height=200)
 
-    def __call__(self):
-        self.wait_window()
-        return self.color
-
-    def destroy(self):
-        self.color = parse_color(self, self.cget('background'))
-        return super(HSVColorPicker, self).destroy()
+    def color(self):
+        """Return tk string var"""
+        return self.cget('background')
 
     def rgb(self):
+        """Return r,g,b int tuple (0-255)."""
         return parse_color(self, self.cget('background'))
 
     def hsv(self):
-        return (
-            int(self.hentry.get())/60,
-            int(self.sentry.get())/100,
-            int(self.ventry.get()),
-        )
+        """Return hsv tuple in range of 0-1, 0-1, 0-1."""
+        try:
+            h = float(self.hentry.get())
+        except ValueError:
+            h = 0
+        try:
+            s = float(self.sentry.get())
+        except ValueError:
+            s = 0
+        try:
+            v = float(self.ventry.get())
+        except ValueError:
+            v = 0
+        return (h/360, s, v)
 
     @staticmethod
-    @bindings['HSVColorPicker.sv'].bind('<Configure>')
+    @bindings['HSV.sv'].bind('<Configure>')
     def _resize_sv(widget, width, height):
         picker = widget.master
-        dim = max(width, height)
-        if picker.svpalette.shape[0] != dim:
+        iheight, iwidth = picker.svpalette.shape[:2]
+        if iheight != height or iwidth != width:
             h, s, v = picker.hsv()
-            picker.svpalette = make_sv_palette(h, None, dim)
+            picker.svpalette = make_sv_palette(h*6, None, width, height)
             picker.svim.configure(
                 data=draw_sv_selection(
                     picker.svpalette,
-                    int(s * width),
-                    int((1-(v/255))*height)))
+                    int(s * (width-1)),
+                    int((1-v)*(height-1))))
 
     @staticmethod
-    @bindings['HSVColorPicker.sv'].bind('<B1-Motion>', '<Button-1>')
-    def _picksv(widget, x, y):
+    @bindings['HSV.sv'].bind('<B1-Motion>', '<Button-1>')
+    def _pick_sv(widget, x, y):
         picker = widget.master
         height, width = picker.svpalette.shape[:2]
         x = min(max(x, 0), width-1)
         y = min(max(y, 0), height-1)
         picker.svim.configure(
             data=draw_sv_selection(picker.svpalette, x, y))
-        h = picker.hsv()[0]
         s = x/(width-1)
-        v = 1 - y / (height-1)
+        v = 1 - y/(height-1)
+        picker.sentry.configure(validate='none')
+        picker.ventry.configure(validate='none')
         picker.sentry.delete(0, 'end')
-        picker.sentry.insert(0, str(int(s*100)))
+        picker.sentry.insert(0, fstr(s))
         picker.ventry.delete(0, 'end')
-        picker.ventry.insert(0, str(int(v*255)))
-        picker.configure(background=format_color(*picker.svpalette[y, x, ::-1]))
+        picker.ventry.insert(0, fstr(v))
+        picker.sentry.configure(validate='key')
+        picker.ventry.configure(validate='key')
+        picker.configure(
+            background=format_color(*picker.svpalette[y, x, ::-1]))
+        picker.change_origin.event_generate('<<ColorChange>>', when='head')
 
 
-    @bindings['HSVColorPicker.h'].bind('<Configure>')
+    @bindings['HSV.h'].bind('<Configure>')
     def _resize_h(widget, height):
         picker = widget.master
         if picker.hpalette.shape[0] != height:
-            h, s, v = picker.hsv()
+            h = picker.hsv()[0]
             picker.hpalette = make_hue_palette(dim=height)
             picker.him.configure(
                 data=draw_h_selection(
-                    picker.hpalette, int((1 - h/6)*height)))
+                    picker.hpalette, int((1 - h)*(height-1))))
 
-    @bindings['HSVColorPicker.h'].bind('<B1-Motion>', '<Button-1>')
+    @bindings['HSV.h'].bind('<B1-Motion>', '<Button-1>')
     def _pick_h(widget, y):
         picker = widget.master
         height = picker.hpalette.shape[0]
@@ -387,31 +409,105 @@ class HSVColorPicker(tk.Toplevel, object):
             data=draw_h_selection(picker.hpalette, y))
         s, v = picker.hsv()[1:]
         h = (1 - y/(height-1))
+        picker.hentry.configure(validate='none')
         picker.hentry.delete(0, 'end')
-        picker.hentry.insert(0, str(int(h*360)))
+        picker.hentry.insert(0, fstr(h*360))
+        picker.hentry.configure(validate='key')
         make_sv_palette(h*6, picker.svpalette)
-        cv2.imshow('...', picker.svpalette)
-        cv2.waitKey(50)
         svh, svw = picker.svpalette.shape[:2]
-        svx, svy = int(s*(svw-1)), int((1-v/255)*(svh-1))
+        svx, svy = int(s*(svw-1)), int((1-v)*(svh-1))
         picker.svim.configure(
             data=draw_sv_selection(picker.svpalette, svx, svy))
         picker.configure(
             background=format_color(*picker.svpalette[svy, svx,::-1]))
+        picker.change_origin.event_generate('<<ColorChange>>', when='head')
+
+    @bindings(scope=scopes.Validation, data=(None, float))
+    def floatvalidate(widget, current, pending, data):
+        if pending:
+            try:
+                fval = float(pending)
+            except ValueError:
+                if pending != '.':
+                    return False
+            else:
+                if fval > data:
+                    widget.delete(0, 'end')
+                    widget.insert(0, fstr(data))
+                    widget.after_idle(
+                        lambda: widget.configure(validate='key'))
+                elif pending.startswith('0') and len(pending) > 1:
+                    for end in range(len(pending)):
+                        if pending[end] != '0':
+                            break
+                    if pending[end] != '.':
+                        widget.after_idle(widget.delete, 0, end)
+        widget.after_idle(widget.master._sync_to_entry, data>2)
+        return True
+
+    def _sync_to_entry(self, huechange):
+        h, s, v = self.hsv()
+        if huechange:
+            hh = self.hpalette.shape[0]
+            hy = round((hh-1) * (1-h))
+            self.him.configure(
+                data=draw_h_selection(self.hpalette, hy))
+            make_sv_palette(h*6, self.svpalette)
+        svh, svw = self.svpalette.shape[:2]
+        svx, svy = round(s*(svw-1)), round((1-v)*(svh-1))
+        self.svim.configure(
+            data=draw_sv_selection(self.svpalette, svx, svy))
+        self.configure(
+            background=format_color(*self.svpalette[svy, svx,::-1]))
+        self.change_origin.event_generate('<<ColorChange>>', when='head')
 
 
 class ColorPicker(tk.Frame, object):
     binds = bindings['ColorPicker']
     def __init__(self, master, *args, **kwargs):
+        cls = kwargs.pop('picker', RGB)
+        color = kwargs.pop('color', 'black')
         super(ColorPicker, self).__init__(master, *args, **kwargs)
-        self.bindtags(('ColorPicker',) + self.bindtags())
-        self.configure(width=100, height=100)
-        self._red = tk.StringVar(self)
-        self._green = tk.StringVar(self)
-        self._blue = tk.StringVar(self)
-        self.configure(relief='raised', background='black')
 
-    @staticmethod
-    @binds.bind('<ButtonRelease-1>')
-    def _show_picker(widget):
-        pass
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.picker = cls(color, self, change_origin=self)
+        self.submit = tk.Button(
+            self, text='submit',
+            command=str(self.submitted.update(widget=(str(self), None))))
+        self.cancel = tk.Button(
+            self, text='cancel',
+            command=str(self.canceled.update(widget=(str(self), None))))
+
+        self.picker.grid(row=0, column=0, columnspan=2, sticky='nsew')
+        self.submit.grid(row=1, column=0, sticky='nsew')
+        self.cancel.grid(row=1, column=1, sticky='nsew')
+        self.out = tk.StringVar(self)
+        self.bindtags(('ColorPicker',) + self.bindtags())
+
+    def __call__(self):
+        """Wait for a color to be submitted or canceled."""
+        orig = self.picker.color()
+        self.wait_variable(self.out)
+        result = self.out.get()
+        if result:
+            return result
+        else:
+            return orig
+
+    def color(self):
+        return self.picker.color()
+
+    def destroy(self):
+        if self.winfo_exists():
+            self.out.set('')
+            super(ColorPicker, self).destroy()
+
+    @bindings().bind('')
+    def submitted(widget):
+        widget.out.set(widget.picker.color())
+
+    @bindings().bind('')
+    def canceled(widget):
+        widget.out.set('')
