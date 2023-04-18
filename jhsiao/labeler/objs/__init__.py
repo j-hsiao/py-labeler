@@ -258,6 +258,12 @@ class Obj(object):
         cls, idn = Obj.parsetag(tag)
         Obj.classes[cls].deactivate(widget, widget.find('withtag', tag))
 
+    @staticmethod
+    @binds.bind('<Button-3>')
+    def hide(widget):
+        """Hide current Obj (or component if part of a composite)."""
+        widget.gettags('current')
+
 class BGImage(object):
     binds = bindings['BGImage']
     def __init__(self, master):

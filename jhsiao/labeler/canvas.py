@@ -12,9 +12,7 @@ class LCanv(tk.Frame, object):
         itembindings.apply(self.canv)
         self.bgim = BGImage(self.canv)
         self.xhairs = Crosshairs(self.canv)
-
         self.canv.grid(row=0, column=0)
-        self.canv.configure(background='blue')
 
     canvbinds.bind('<B1-Leave>', '<B1-Enter>')(' ')
 
