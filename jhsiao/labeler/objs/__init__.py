@@ -88,7 +88,7 @@ class Obj(object):
     @staticmethod
     def parsetag(tag):
         """Parse an Obj tag into class and index."""
-        cls, idn = tag.split('_', 1)
+        cls, idn = tag.rsplit('_', 1)
         return cls, int(idn)
 
     @staticmethod
@@ -101,7 +101,7 @@ class Obj(object):
         tags = master.gettags(idn)
         idx = len(tags) - 1
         tag = tags[idx]
-        while tag == 'current' or tag == 'top':
+        while tag == 'current' or tag == Obj.TOP:
             idx -= 1
             tag = tags[idx]
         return tag
@@ -109,7 +109,7 @@ class Obj(object):
     @staticmethod
     def topid(master, idn):
         """Get the toplevel Obj's item id."""
-        return int(Obj.toptag(master, idn).split('_', 1)[-1])
+        return int(Obj.toptag(master, idn).rsplit('_', 1)[-1])
 
     @staticmethod
     def topitems(master):
@@ -262,7 +262,18 @@ class Obj(object):
     @binds.bind('<Button-3>')
     def hide(widget):
         """Hide current Obj (or component if part of a composite)."""
-        widget.gettags('current')
+        tags = widget.gettags('current')
+        for tag in reversed(tags):
+            if (
+                    tag == 'current'
+                    or tag == Obj.TOP
+                    or tag.startswith('Composite')):
+                continue
+            widget.itemconfigure(tag, state='hidden')
+            return
+        else:
+            raise Exception('Failed to find topbase tag.')
+
 
 class BGImage(object):
     binds = bindings['BGImage']
@@ -272,6 +283,7 @@ class BGImage(object):
         self.raw = None
         master.addtag('BGImage', 'withtag', self.idn)
         master.tag_lower('BGImage')
+        self.show(master, None)
 
     def show(self, master, im):
         if isinstance(im, str):
@@ -324,6 +336,11 @@ class BGImage(object):
         # select item class and instantiate
         #widget.event_generate('<ButtonRelease-1>', x, y)
         #widget.event_generate('<Button-1>', x, y)
+
+    @staticmethod
+    @binds.bind('<Button-3>')
+    def _unhide(widget):
+        widget.itemconfigure(Obj.TAGS[0], state='normal')
 
 class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):

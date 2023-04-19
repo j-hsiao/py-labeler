@@ -72,10 +72,10 @@ def make_composite(name, components):
             idnidxs.append(idnidxs[-1]+c.IDNS)
     attrs = dict(
         IDNIDXS=idnidxs,
-        TAGS=['Composite', '{}_{{}}'.format(name)],
+        TAGS=['Composite_{}_{{}}'.format(name)],
         components=components,
         INFO={cls.__name__: cls.INFO for cls in components},
         IDX=components[0].IDX+1,
         IDNS=idnidxs[-1],
     )
-    return type(name, (Composite,), attrs)
+    return type('Composite_' + name, (Composite,), attrs)
