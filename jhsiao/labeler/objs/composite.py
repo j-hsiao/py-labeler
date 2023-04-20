@@ -60,6 +60,7 @@ class Composite(Obj):
             c.deactivate(widget, ids[cls.IDNIDXS[idx]:cls.IDNIDXS[idx+1]])
 
 def make_composite(name, components):
+    newname = 'Composite' + name
     q = deque(components)
     idnidxs = [0]
     components = []
@@ -72,10 +73,10 @@ def make_composite(name, components):
             idnidxs.append(idnidxs[-1]+c.IDNS)
     attrs = dict(
         IDNIDXS=idnidxs,
-        TAGS=['Composite_{}_{{}}'.format(name)],
+        TAGS=['Composite{}_{{}}'.format(name)],
         components=components,
         INFO={cls.__name__: cls.INFO for cls in components},
         IDX=components[0].IDX+1,
         IDNS=idnidxs[-1],
     )
-    return type('Composite_' + name, (Composite,), attrs)
+    return Obj.register(type(newname, (Composite,), attrs))

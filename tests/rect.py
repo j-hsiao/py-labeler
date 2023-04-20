@@ -1,4 +1,4 @@
-from jhsiao.labeler.objs import bindings
+from jhsiao.labeler import bindings
 from jhsiao.labeler.objs.rect import Rect, RectPt
 from jhsiao.tkutil import tk
 

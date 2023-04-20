@@ -10,9 +10,9 @@ import numpy as np
 from PIL import Image, ImageTk
 
 from jhsiao.tkutil import tk
-from jhsiao.tkutil.bindings import Bindings
 from jhsiao.utils.importutils import get_subclasses
-bindings = Bindings('tag_bind')
+from .. import bindings
+bindings = bindings('tag_bind')
 
 class Obj(object):
     """An object on a tk.Canvas.

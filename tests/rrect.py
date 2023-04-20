@@ -1,12 +1,12 @@
-from jhsiao.labeler import bindings as wbinds
+from jhsiao.labeler import bindings
 from jhsiao.labeler.canvas import LCanv
-from jhsiao.labeler.objs import bindings, Crosshairs
+from jhsiao.labeler.objs import Crosshairs
 from jhsiao.labeler.objs.rrect import RRect
 from jhsiao.tkutil import tk
 
 def test_rrect():
     r = tk.Tk()
-    wbinds.apply(r)
+    bindings.apply(r)
     c = LCanv(r)
     c.grid()
     rect = RRect(c.canv, 50, 50, 'blue')

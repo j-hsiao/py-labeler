@@ -235,7 +235,7 @@ class RGB(tk.Frame, object):
         """Return tk string var"""
         return self.cget('background')
 
-    @bindings(scope=scopes.Trace)
+    @bindings('', scope=scopes.Trace)
     def onchange(widget, var, index, op):
         r = widget.red.get()
         g = widget.green.get()
@@ -247,7 +247,7 @@ class RGB(tk.Frame, object):
         widget.change_origin.event_generate(
             '<<ColorChange>>', when='head')
 
-    @bindings(scope=scopes.Validation, data=(None, int))
+    @bindings('', scope=scopes.Validation, data=(None, int))
     def intvalidate(widget, current, pending, data=None):
         if pending:
             try:
@@ -422,7 +422,7 @@ class HSV(tk.Frame, object):
             background=format_color(*picker.svpalette[svy, svx,::-1]))
         picker.change_origin.event_generate('<<ColorChange>>', when='head')
 
-    @bindings(scope=scopes.Validation, data=(None, float))
+    @bindings('', scope=scopes.Validation, data=(None, float))
     def floatvalidate(widget, current, pending, data):
         if pending:
             try:
@@ -504,10 +504,10 @@ class ColorPicker(tk.Frame, object):
             self.out.set('')
             super(ColorPicker, self).destroy()
 
-    @bindings().bind('')
+    @bindings('').bind('')
     def submitted(widget):
         widget.out.set(widget.picker.color())
 
-    @bindings().bind('')
+    @bindings('').bind('')
     def canceled(widget):
         widget.out.set('')

@@ -1,6 +1,5 @@
 from jhsiao.tkutil import tk
 from . import bindings
-from .objs import bindings as itembindings
 from .objs import Crosshairs, BGImage
 
 class LCanv(tk.Frame, object):
@@ -9,7 +8,7 @@ class LCanv(tk.Frame, object):
         super(LCanv, self).__init__(master, *args, **kwargs)
         self.canv = tk.Canvas(self)
         self.canv.bindtags(self.canv.bindtags() + ('LCanv.canv',))
-        itembindings.apply(self.canv)
+        bindings.apply(self.canv, methods=['tag_bind'], create=False)
         self.bgim = BGImage(self.canv)
         self.xhairs = Crosshairs(self.canv)
         self.canv.grid(row=0, column=0)
