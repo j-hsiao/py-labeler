@@ -61,6 +61,7 @@ class RRect(Obj):
             master.create_line(x,y,x,y, fill=alt, arrow='last', state='disabled'),
         )
         self.addtags(master, self.ids[:1], RRect.TAGS[:1])
+        self.addtags(master, self.ids[-1:], ['disabled'])
         self.addtags(master, self.ids, RRect.TAGS[1:])
 
     @staticmethod

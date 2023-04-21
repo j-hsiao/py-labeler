@@ -224,7 +224,7 @@ class Obj(object):
     # General Obj behavior
     @staticmethod
     @binds.bind('<Button-1>')
-    def onclick(widget):
+    def _onclick(widget):
         """When clicked, set the current tag."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
@@ -244,7 +244,7 @@ class Obj(object):
 
     @staticmethod
     @binds.bind('<Enter>')
-    def onenter(widget):
+    def _onenter(widget):
         """Call activate."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
@@ -252,7 +252,7 @@ class Obj(object):
 
     @staticmethod
     @binds.bind('<Leave>')
-    def onleave(widget):
+    def _onleave(widget):
         """Call deactivate."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
@@ -260,7 +260,7 @@ class Obj(object):
 
     @staticmethod
     @binds.bind('<Button-3>')
-    def hide(widget):
+    def _hide(widget):
         """Hide current Obj (or component if part of a composite)."""
         tags = widget.gettags('current')
         for tag in reversed(tags):
@@ -270,6 +270,7 @@ class Obj(object):
                     or tag.startswith('Composite')):
                 continue
             widget.itemconfigure(tag, state='hidden')
+            widget.addtag('hidden', 'withtag', tag)
             return
         else:
             raise Exception('Failed to find topbase tag.')
@@ -339,8 +340,15 @@ class BGImage(object):
 
     @staticmethod
     @binds.bind('<Button-3>')
-    def _unhide(widget):
-        widget.itemconfigure(Obj.TAGS[0], state='normal')
+    def _toggle_hide(widget):
+        ids = widget.find('withtag', 'hidden')
+        if ids:
+            widget.itemconfigure('hidden&&!disabled', state='normal')
+            widget.dtag('hidden')
+            widget.itemconfigure('disabled', state='disabled')
+        else:
+            widget.itemconfigure('Obj', state='hidden')
+            widget.addtag('hidden', 'withtag', 'Obj')
 
 class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
