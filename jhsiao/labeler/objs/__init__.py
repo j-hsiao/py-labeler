@@ -10,9 +10,8 @@ import numpy as np
 from PIL import Image, ImageTk
 
 from jhsiao.tkutil import tk
-from jhsiao.utils.importutils import get_subclasses
-from .. import bindings
-bindings = bindings('tag_bind')
+from .. import bindings as wbindings
+bindings = wbindings('tag_bind')
 
 class Obj(object):
     """An object on a tk.Canvas.
@@ -353,17 +352,40 @@ class BGImage(object):
 class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
         super(ObjSelector, self).__init__(master, *args, **kwargs)
-        self.lst = tk.Listbox(self)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.lbl = tk.Label(self, text='Object type')
+        self.lst = tk.Listbox(self, exportselection=False)
         self.scroll = tk.Scrollbar(
-            self, orient='horizontal', command=self.lst.yview)
+            self, orient='vertical', command=self.lst.yview)
         self.lst.configure(yscrollcommand=self.scroll.set)
-        self.lst.grid(row=0, column=0)
-        self.scroll.grid(row=0, column=1)
+        self.clbl = tk.Label(self, text='Composite components')
+        self.clst = tk.Listbox(self, exportselection=False)
+        self.cscroll = tk.Scrollbar(
+            self, orient='vertical', command=self.clst.yview)
+        self.clst.configure(yscrollcommand=self.cscroll.set)
+        self.lbl.grid(row=0, column=0, columnspan=2, sticky='ew')
+        self.lst.grid(row=1, column=0, sticky='nsew')
+        self.scroll.grid(row=1, column=1, sticky='nsew')
+        self.clbl.grid(row=0, column=2, columnspan=2, sticky='ew')
+        self.clst.grid(row=1, column=2, sticky='nsew')
+        self.cscroll.grid(row=1, column=3, sticky='nsew')
 
-        self.classes = dict(
-            get_subclasses(Obj, __path__, 'jhsiao.labeleritems.'))
-        for cls in self.classes:
-            self.lst.insert('end', cls)
+    def reload(self):
+        self.lst.insert(0, delete(0, 'end'))
+        toadd = []
+        for name in sorted(Obj.classes):
+            if name.startswith('Composite'):
+                toadd.append(
+            else:
+                toadd.append(name)
+        self.lst.insert('end', *toadd)
+
+
+
+
+
+
 
 class Crosshairs(object):
     """Canvas crosshairs."""
