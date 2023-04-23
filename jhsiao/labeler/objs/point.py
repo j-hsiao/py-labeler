@@ -1,7 +1,8 @@
 """Represents a single point."""
 from __future__ import division
 __all__ = ['Point']
-from . import Obj, ibinds
+from .obj import Obj
+from . import ibinds
 
 @Obj.register
 class Point(Obj):

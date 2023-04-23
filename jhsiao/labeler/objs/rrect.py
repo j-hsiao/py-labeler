@@ -1,7 +1,8 @@
 """Rotated rectangle."""
 from __future__ import division
 __all__ = ['RRect']
-from . import Obj, ibinds
+from .obj import Obj
+from . import ibinds
 from .point import Point
 import math
 

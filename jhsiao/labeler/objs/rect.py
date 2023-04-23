@@ -1,7 +1,8 @@
 """A rectangle (axis aligned)."""
 from __future__ import division
 __all__ = ['Rect']
-from . import Obj, ibinds
+from .obj import Obj
+from . import ibinds
 from .point import Point
 
 @Obj.register
