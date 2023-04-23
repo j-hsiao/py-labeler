@@ -59,8 +59,13 @@ class Composite(Obj):
         for idx, c in enumerate(cls.components):
             c.deactivate(widget, ids[cls.IDNIDXS[idx]:cls.IDNIDXS[idx+1]])
 
-def make_composite(name, components):
-    newname = 'Composite' + name
+def make_composite(components, name=None):
+    """Create a composite Obj.
+
+    components: classes to use as comonents.
+    name: the name of the resulting class.
+        If None, use a concatenation of the components.
+    """
     q = deque(components)
     idnidxs = [0]
     components = []
@@ -71,9 +76,12 @@ def make_composite(name, components):
         else:
             components.append(c)
             idnidxs.append(idnidxs[-1]+c.IDNS)
+    if not name:
+        name = ''.join([cls.__name__ for cls in components])
+    newname = 'Composite' + name
     attrs = dict(
         IDNIDXS=idnidxs,
-        TAGS=['Composite{}_{{}}'.format(name)],
+        TAGS=['{}_{{}}'.format(newname)],
         components=components,
         INFO={cls.__name__: cls.INFO for cls in components},
         IDX=components[0].IDX+1,

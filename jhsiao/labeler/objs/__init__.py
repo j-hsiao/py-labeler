@@ -408,15 +408,17 @@ class ObjSelector(tk.Frame, object):
     @staticmethod
     @bindings['ObjSelector.lst'].bind('<ButtonRelease-1>')
     def _add_component(widget):
+        """Add a component to list for composite."""
         self = widget.master
         if self.creating:
             self.clst.insert(
                 'end',
-                self.classname(widget.get(widget.curselection()[0])))
+                widget.get(widget.curselection()[0]))
 
     @staticmethod
     @bindings['ObjSelector.lst'].bind('<<ListboxSelect>>')
     def _sel_changed(widget):
+        """Change the current selected class."""
         self = widget.master
         curname = self.classname(widget.get(widget.curselection()[0]))
         self._cls = Obj.classes.get(curname)
@@ -424,25 +426,28 @@ class ObjSelector(tk.Frame, object):
     @staticmethod
     @bindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
     def _rm_component(widget):
+        """Remove a component from composite list."""
         self = widget.master
         if self.creating:
-            self.clst.delete(
-                widget.curselection()[0])
+            self.clst.delete(widget.curselection()[0])
 
     @staticmethod
     def displayname(classname):
+        """Calculate the name to display from class name."""
         if classname.startswith('Composite'):
             return classname[len('Composite'):] + '(Composite)'
         return classname
 
     @staticmethod
     def classname(displayname):
+        """Calculate the class name from display name."""
         if displayname.endswith('(Composite)'):
             displayname = 'Composite' + displayname[:-len('(Composite)')]
         return displayname
 
     @bindings('')
     def _toggle_creation(widget):
+        """Toggle composite creation mode."""
         if widget.creating:
             widget.creating = False
             widget.togglebutton.configure(text='start creation')
@@ -458,22 +463,29 @@ class ObjSelector(tk.Frame, object):
 
     @bindings('')
     def _create(widget):
+        """Create the composite class.
+
+        If no components have een selected, cancel.
+        Otherwise, create a composite class and add to list of classes.
+        """
         names = widget.clst.get(0, 'end')
         tname = widget.compositename.get()
         if names:
-            if not tname:
-                tname=''.join(names)
-            print(tname, names)
+            from .composite import make_composite
+            make_composite(
+                [Obj.classes[widget.classname(name)] for name in names],
+                tname)
+            widget.reload()
         widget.clst.delete(0, 'end')
         widget.compositename.delete(0, 'end')
         widget._toggle_creation.func(widget)
         widget.lst.focus_set()
 
     def reload(self):
+        """Reload the list of classes (sorted order."""
         self.lst.delete(0, 'end')
-        toadd = [
-            self.displayname(name)
-            for name in sorted(Obj.classes, key=str.lower)]
+        toadd = [self.displayname(name) for name in Obj.classes]
+        toadd.sort(key=str.lower)
         self.lst.insert('end', *toadd)
         self.lst.selection_clear(0, 'end')
         self.lst.selection_set(0)

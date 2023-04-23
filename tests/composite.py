@@ -12,7 +12,7 @@ def test_composite():
     c = LCanv(r)
     c.grid(row=0, column=0, sticky='nsew')
     compositeclass = composite.make_composite(
-        'tst', [rect.Rect, rrect.RRect, point.Point])
+        [rect.Rect, rrect.RRect, point.Point], 'tst')
     compositeclass(c.canv, 50, 50, 'black')
     rrect.RRect(c.canv, 100, 50, 'blue')
     r.bind('<Escape>', r.register(r.destroy))
