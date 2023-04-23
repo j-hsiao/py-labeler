@@ -17,8 +17,8 @@ from PIL import Image, ImageTk
 import pkgutil
 
 from jhsiao.tkutil import tk, add_bindtags
-from .. import bindings as wbindings
-bindings = wbindings('tag_bind')
+from .. import bindings
+ibinds = bindings('tag_bind')
 
 class Obj(object):
     """An object on a tk.Canvas.
@@ -56,7 +56,7 @@ class Obj(object):
     TOP = 'top'
     TAGS = ['Obj']
     IDX = 0
-    binds = bindings['Obj']
+    binds = ibinds['Obj']
     classes = dict()
     IDNS = 0
 
@@ -283,7 +283,7 @@ class Obj(object):
 
 
 class BGImage(object):
-    binds = bindings['BGImage']
+    binds = ibinds['BGImage']
     def __init__(self, master):
         self.idn = master.create_image(0,0, anchor='nw')
         self.im = None
@@ -406,7 +406,7 @@ class ObjSelector(tk.Frame, object):
         return self._cls
 
     @staticmethod
-    @wbindings['ObjSelector.lst'].bind('<ButtonRelease-1>')
+    @bindings['ObjSelector.lst'].bind('<ButtonRelease-1>')
     def _add_component(widget):
         self = widget.master
         if self.creating:
@@ -415,14 +415,14 @@ class ObjSelector(tk.Frame, object):
                 self.classname(widget.get(widget.curselection()[0])))
 
     @staticmethod
-    @wbindings['ObjSelector.lst'].bind('<<ListboxSelect>>')
+    @bindings['ObjSelector.lst'].bind('<<ListboxSelect>>')
     def _sel_changed(widget):
         self = widget.master
         curname = self.classname(widget.get(widget.curselection()[0]))
         self._cls = Obj.classes.get(curname)
 
     @staticmethod
-    @wbindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
+    @bindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
     def _rm_component(widget):
         self = widget.master
         if self.creating:
@@ -441,7 +441,7 @@ class ObjSelector(tk.Frame, object):
             displayname = 'Composite' + displayname[:-len('(Composite)')]
         return displayname
 
-    @wbindings('')
+    @bindings('')
     def _toggle_creation(widget):
         if widget.creating:
             widget.creating = False
@@ -456,7 +456,7 @@ class ObjSelector(tk.Frame, object):
             widget.clst.configure(state='normal')
             widget.compositename.configure(state='normal')
 
-    @wbindings('')
+    @bindings('')
     def _create(widget):
         names = widget.clst.get(0, 'end')
         tname = widget.compositename.get()

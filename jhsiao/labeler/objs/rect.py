@@ -1,7 +1,7 @@
 """A rectangle (axis aligned)."""
 from __future__ import division
 __all__ = ['Rect']
-from . import Obj, bindings
+from . import Obj, ibinds
 from .point import Point
 
 @Obj.register
@@ -18,7 +18,7 @@ class Rect(Obj):
     TAGS = ['Rect', 'Rect_{}']
     IDX = Obj.IDX + len(TAGS)
     IDNS = 9
-    binds = bindings['Rect']
+    binds = ibinds['Rect']
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)
         super(Rect, self).__init__(
@@ -26,7 +26,8 @@ class Rect(Obj):
             master.create_rectangle(
                 x, y, x, y, fill=color,
                 outline=color,
-                stipple='gray12', activestipple='gray25'),
+                stipple='gray12', activestipple='gray25',
+                width=3),
             RectSide(master, x, y, alt),
             RectSide(master, x, y, alt),
             RectSide(master, x, y, alt),
@@ -98,6 +99,7 @@ class Rect(Obj):
 
     @staticmethod
     def activate(widget, ids):
+        widget.itemconfigure(ids[0], width=5)
         for sid in ids[1:5]:
             widget.itemconfigure(sid, width=3)
         for pid in ids[5:]:
@@ -105,6 +107,7 @@ class Rect(Obj):
 
     @staticmethod
     def deactivate(widget, ids):
+        widget.itemconfigure(ids[0], width=3)
         for sid in ids[1:5]:
             widget.itemconfigure(sid, width=1)
         for pid in ids[5:]:
@@ -152,7 +155,7 @@ class Rect(Obj):
 
 class RectSide(Obj):
     TAGS = ['RectSide']
-    binds = bindings['RectSide']
+    binds = ibinds['RectSide']
     IDX = Obj.IDX + 2
     def __init__(self, master, x, y, color):
         super(RectSide, self).__init__(
@@ -226,7 +229,7 @@ class RectSide(Obj):
 
 class RectPt(Point):
     TAGS = ['RectPt']
-    binds = bindings['RectPt']
+    binds = ibinds['RectPt']
     IDX = Point.IDX + 2
     def __init__(self, master, x, y, color):
         super(RectPt, self).__init__(master, x, y, color)

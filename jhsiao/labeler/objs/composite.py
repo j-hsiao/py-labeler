@@ -1,7 +1,7 @@
 from collections import deque
 
 
-from . import Obj, bindings
+from . import Obj
 
 class Composite(Obj):
     """Composite of multiple different basic objects.

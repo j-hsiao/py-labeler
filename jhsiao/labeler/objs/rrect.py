@@ -1,7 +1,7 @@
 """Rotated rectangle."""
 from __future__ import division
 __all__ = ['RRect']
-from . import Obj, bindings
+from . import Obj, ibinds
 from .point import Point
 import math
 
@@ -46,14 +46,14 @@ class RRect(Obj):
     TAGS = ['RRect', 'RRect_{}']
     IDX = Obj.IDX + len(TAGS)
     IDNS = 6
-    binds = bindings['RRect']
+    binds = ibinds['RRect']
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)
         super(RRect, self).__init__(
             master,
             master.create_polygon(
                 x-50,y,x+50,y,x+50,y,x-50,y, fill=color, outline=color,
-                stipple='gray12', activestipple='gray25'),
+                stipple='gray12', activestipple='gray25', width=3),
             RRectHSide(master, x, y, alt),
             RRectHSide(master, x, y, alt),
             RRectVSide(master, x, y, alt),
@@ -173,11 +173,13 @@ class RRect(Obj):
 
     @staticmethod
     def activate(widget, ids):
+        widget.itemconfigure(ids[0], width=5)
         for idn in ids[1:5]:
             widget.itemconfigure(idn, width=3)
 
     @staticmethod
     def deactivate(widget, ids):
+        widget.itemconfigure(ids[0], width=3)
         for idn in ids[1:5]:
             widget.itemconfigure(idn, width=1)
 
@@ -228,7 +230,7 @@ class RRect(Obj):
 class RRectVSide(Obj):
     TAGS = ['RRectVSide']
     IDX = Obj.IDX + 2
-    binds = bindings['RRectVSide']
+    binds = ibinds['RRectVSide']
     def __init__(self, master, x, y, color='black'):
         super(RRectVSide, self).__init__(
             master,
@@ -294,7 +296,7 @@ class RRectVSide(Obj):
 class RRectHSide(Obj):
     TAGS = ['RRectHSide']
     IDX = Obj.IDX + 2
-    binds = bindings['RRectHSide']
+    binds = ibinds['RRectHSide']
     def __init__(self, master, x, y, color='black'):
         super(RRectHSide, self).__init__(
             master,

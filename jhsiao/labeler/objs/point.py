@@ -1,7 +1,7 @@
 """Represents a single point."""
 from __future__ import division
 __all__ = ['Point']
-from . import Obj, bindings
+from . import Obj, ibinds
 
 @Obj.register
 class Point(Obj):
@@ -10,7 +10,7 @@ class Point(Obj):
     IDX = Obj.IDX  + len(TAGS)
     IDNS = 1
 
-    binds = bindings['Point']
+    binds = ibinds['Point']
 
     radius = 5
     awidth = 10
