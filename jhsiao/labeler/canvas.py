@@ -1,4 +1,4 @@
-from jhsiao.tkutil import tk
+from jhsiao.tkutil import tk, add_bindtags
 from . import bindings
 from .objs import Crosshairs, BGImage
 
@@ -7,7 +7,7 @@ class LCanv(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
         super(LCanv, self).__init__(master, *args, **kwargs)
         self.canv = tk.Canvas(self)
-        self.canv.bindtags(self.canv.bindtags() + ('LCanv.canv',))
+        add_bindtags(self.canv, 'LCanv.canv')
         bindings.apply(self.canv, methods=['tag_bind'], create=False)
         self.bgim = BGImage(self.canv)
         self.xhairs = Crosshairs(self.canv)

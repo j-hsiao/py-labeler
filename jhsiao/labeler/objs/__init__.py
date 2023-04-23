@@ -3,13 +3,20 @@ from __future__ import print_function
 __all__ = ['Obj', 'BGImage', 'Crosshairs']
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
-import sys
+import importlib
 import math
+import sys
+
+if sys.version_info.major > 2:
+    from tkinter import messagebox
+else:
+    import tkMessageBox as messagebox
 
 import numpy as np
 from PIL import Image, ImageTk
+import pkgutil
 
-from jhsiao.tkutil import tk
+from jhsiao.tkutil import tk, add_bindtags
 from .. import bindings as wbindings
 bindings = wbindings('tag_bind')
 
@@ -352,7 +359,10 @@ class BGImage(object):
 class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
         super(ObjSelector, self).__init__(master, *args, **kwargs)
+        self.creating = False
+
         self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.lbl = tk.Label(self, text='Object type')
         self.lst = tk.Listbox(self, exportselection=False)
@@ -360,7 +370,7 @@ class ObjSelector(tk.Frame, object):
             self, orient='vertical', command=self.lst.yview)
         self.lst.configure(yscrollcommand=self.scroll.set)
         self.clbl = tk.Label(self, text='Composite components')
-        self.clst = tk.Listbox(self, exportselection=False)
+        self.clst = tk.Listbox(self, exportselection=False, state='disabled')
         self.cscroll = tk.Scrollbar(
             self, orient='vertical', command=self.clst.yview)
         self.clst.configure(yscrollcommand=self.cscroll.set)
@@ -370,22 +380,115 @@ class ObjSelector(tk.Frame, object):
         self.clbl.grid(row=0, column=2, columnspan=2, sticky='ew')
         self.clst.grid(row=1, column=2, sticky='nsew')
         self.cscroll.grid(row=1, column=3, sticky='nsew')
+        self.addpath(__path__, 'jhsiao.labeler.objs.')
+        add_bindtags(self.lst, 'ObjSelector.lst')
+        add_bindtags(self.clst, 'ObjSelector.clst')
+
+        self.createbutton = tk.Button(
+            self, text='create', state='disabled',
+            command=str(self._create.update(widget=(str(self), None))))
+        self.createbutton.grid(row=2, column=2, columnspan=2, sticky='nsew')
+        self.togglebutton = tk.Button(
+            self, text='start creation',
+            command=str(self._toggle_creation.update(widget=(str(self), None))))
+        self.togglebutton.grid(row=2, column=0, columnspan=2, sticky='nsew')
+
+        self.nframe = tk.Frame(self)
+        self.nframe.grid_columnconfigure(1, weight=1)
+        self.namelbl = tk.Label(self.nframe, text='Composite name:')
+        self.compositename = tk.Entry(self.nframe, state='disabled')
+        self.nframe.grid(row=3, column=0, columnspan=4, sticky='nsew')
+        self.namelbl.grid(row=0, column=0, sticky='nsew')
+        self.compositename.grid(row=0, column=1, sticky='nsew')
+
+    def __call__(self):
+        """Retrieve the currently selected class."""
+        return self._cls
+
+    @staticmethod
+    @wbindings['ObjSelector.lst'].bind('<ButtonRelease-1>')
+    def _add_component(widget):
+        self = widget.master
+        if self.creating:
+            self.clst.insert(
+                'end',
+                self.classname(widget.get(widget.curselection()[0])))
+
+    @staticmethod
+    @wbindings['ObjSelector.lst'].bind('<<ListboxSelect>>')
+    def _sel_changed(widget):
+        self = widget.master
+        curname = self.classname(widget.get(widget.curselection()[0]))
+        self._cls = Obj.classes.get(curname)
+
+    @staticmethod
+    @wbindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
+    def _rm_component(widget):
+        self = widget.master
+        if self.creating:
+            self.clst.delete(
+                widget.curselection()[0])
+
+    @staticmethod
+    def displayname(classname):
+        if classname.startswith('Composite'):
+            return classname[len('Composite'):] + '(Composite)'
+        return classname
+
+    @staticmethod
+    def classname(displayname):
+        if displayname.endswith('(Composite)'):
+            displayname = 'Composite' + displayname[:-len('(Composite)')]
+        return displayname
+
+    @wbindings('')
+    def _toggle_creation(widget):
+        if widget.creating:
+            widget.creating = False
+            widget.togglebutton.configure(text='start creation')
+            widget.createbutton.configure(state='disabled')
+            widget.clst.configure(state='disabled')
+            widget.compositename.configure(state='disabled')
+        else:
+            widget.creating = True
+            widget.togglebutton.configure(text='stop creation')
+            widget.createbutton.configure(state='normal')
+            widget.clst.configure(state='normal')
+            widget.compositename.configure(state='normal')
+
+    @wbindings('')
+    def _create(widget):
+        names = widget.clst.get(0, 'end')
+        tname = widget.compositename.get()
+        if names:
+            if not tname:
+                tname=''.join(names)
+            print(tname, names)
+        widget.clst.delete(0, 'end')
+        widget.compositename.delete(0, 'end')
+        widget._toggle_creation.func(widget)
+        widget.lst.focus_set()
 
     def reload(self):
-        self.lst.insert(0, delete(0, 'end'))
-        toadd = []
-        for name in sorted(Obj.classes):
-            if name.startswith('Composite'):
-                toadd.append(
-            else:
-                toadd.append(name)
+        self.lst.delete(0, 'end')
+        toadd = [
+            self.displayname(name)
+            for name in sorted(Obj.classes, key=str.lower)]
         self.lst.insert('end', *toadd)
+        self.lst.selection_clear(0, 'end')
+        self.lst.selection_set(0)
+        self._sel_changed(self.lst)
 
+    def addpath(self, paths, prefix):
+        """Import submodules in path under prefix.
 
-
-
-
-
+        Any additional Objs should be `register`ed.
+        """
+        if isinstance(paths, str):
+            paths = [paths]
+        for finder, name, ispkg in pkgutil.walk_packages(paths, prefix):
+            importlib.import_module(name)
+        self.reload()
 
 class Crosshairs(object):
     """Canvas crosshairs."""

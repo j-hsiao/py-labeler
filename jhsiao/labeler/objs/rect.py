@@ -131,7 +131,9 @@ class Rect(Obj):
         Obj.snapto(widget, x, y, ((l+r)//2, (t+b)//2))
 
     @staticmethod
-    @binds.bind('<B1-Motion>')
+    @binds.bind(
+        '<B1-Motion>', '<B1-Shift-Motion>',
+        '<B1-Leave>', '<B1-Shift-Leave>')
     def _move(widget, x, y):
         l, t, r, b = widget.coords('current')
         ox = (l+r)//2
@@ -231,7 +233,9 @@ class RectPt(Point):
         self.addtags(master, self.ids, RectPt.TAGS)
 
     @staticmethod
-    @binds.bind('<B1-Motion>')
+    @binds.bind(
+        '<B1-Motion>', '<Shift-B1-Motion>',
+        '<B1-Leave>', '<Shift-B1-Leave>')
     def _moved(widget, x, y):
         idns = RectPt.members(widget, 'current')
         idx = idns.index(widget.find('withtag', 'current')[0], 5)

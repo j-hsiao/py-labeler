@@ -5,7 +5,7 @@ import base64
 import cv2
 import numpy as np
 
-from jhsiao.tkutil import tk
+from jhsiao.tkutil import tk, add_bindtags
 from jhsiao.tkutil.bindings import scopes
 from . import bindings
 
@@ -292,8 +292,8 @@ class HSV(tk.Frame, object):
             self, image=self.svim, highlightthickness=0, borderwidth=0)
         hl = tk.Label(
             self, image=self.him, highlightthickness=0, borderwidth=0)
-        svl.bindtags(('HSV.sv',)+svl.bindtags())
-        hl.bindtags(('HSV.h',)+hl.bindtags())
+        add_bindtags(svl, 'HSV.sv')
+        add_bindtags(hl, 'HSV.h')
         hlabel = tk.Label(self, text='h:')
         slabel = tk.Label(self, text='s:')
         vlabel = tk.Label(self, text='v:')
@@ -484,7 +484,7 @@ class ColorPicker(tk.Frame, object):
         self.submit.grid(row=1, column=0, sticky='nsew')
         self.cancel.grid(row=1, column=1, sticky='nsew')
         self.out = tk.StringVar(self)
-        self.bindtags(('ColorPicker',) + self.bindtags())
+        add_bindtags(self, 'ColorPicker')
 
     def __call__(self):
         """Wait for a color to be submitted or canceled."""

@@ -4,7 +4,7 @@ import ast
 
 from . import bindings
 
-from jhsiao.tkutil import tk
+from jhsiao.tkutil import tk, add_bindtags
 
 class DictItem(tk.Frame):
     ebinds = bindings['DictItemEntry']
@@ -13,12 +13,9 @@ class DictItem(tk.Frame):
         self.key = tk.Entry(self)
         self.value = tk.Entry(self)
         self.rm = tk.Button(self, text='x')
-        self.rm.bindtags(
-            ('DictItemSub', 'DictItemRm',) + self.rm.bindtags())
-        self.key.bindtags(
-            ('DictItemSub', 'DictItemEntry',) + self.key.bindtags())
-        self.value.bindtags(
-            ('DictItemSub', 'DictItemEntry',) + self.value.bindtags())
+        add_bindtags(self.rm, 'DictItemSub', 'DictItemRm')
+        add_bindtags(self.key, 'DictItemSub', 'DictItemEntry')
+        add_bindtags(self.value, 'DictItemSub', 'DictItemEntry')
         self.key.grid(row=0, column=0, sticky='nsew')
         self.value.grid(row=0, column=1, sticky='nsew')
         self.rm.grid(row=0, column=2)
@@ -169,12 +166,11 @@ class Dict(tk.Frame):
         self.dwindow = self.scrollcanv.create_window(
             0, 0, anchor='nw', window=self.dframe)
         self.add_item()
-        self.dframe.bindtags(('DictFrame',) + self.dframe.bindtags())
-        self.scrollcanv.bindtags(('DictCanv',) + self.scrollcanv.bindtags())
+        add_bindtags(self.dframe, 'DictFrame')
+        add_bindtags(self.scrollcanv, 'DictCanv')
         self.addbutton = tk.Button(self, text='+')
         self.addbutton.grid(row=1, column=0, sticky='ew', columnspan=2)
-        self.addbutton.bindtags(
-            ('DictPlus',) + self.addbutton.bindtags())
+        add_bindtags(self.addbutton, 'DictPlus')
 
     def dict(self):
         ret = {}
