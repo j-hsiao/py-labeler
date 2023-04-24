@@ -3,6 +3,7 @@ import timeit
 import cv2
 
 import os
+from jhsiao.tkutil import add_bindtags
 
 from jhsiao.labeler.color import (
     tk,
@@ -14,35 +15,32 @@ from jhsiao.labeler.color import (
     rgb2hsv,
 )
 
-@bindings['ColorPicker'].bind('<<ColorChange>>')
+@bindings['TestPicker'].bind('<<ColorChange>>')
 def tempcolor(widget):
     print(widget.color())
+@bindings['TestPicker'].bind('<<ColorSelected>>')
+def selected(widget):
+    widget.master.destroy()
 
 def test_rgb():
     r = tk.Tk()
     bindings.apply(r)
-    picker = ColorPicker(r, picker=RGB, color='black')
-    r.grid_rowconfigure(0, weight=1)
-    r.grid_columnconfigure(0, weight=1)
+    picker = ColorPicker(r, picker=RGB, background='black')
+    add_bindtags(picker, 'TestPicker')
+    r.grid_rowconfigure(0, weight=1, minsize=100)
+    r.grid_columnconfigure(0, weight=1, minsize=100)
     picker.grid(row=0, column=0, sticky='nsew')
-    print(picker())
-    try:
-        r.destroy()
-    except Exception:
-        pass
+    picker.wait_window()
 
 def test_hsv():
     r = tk.Tk()
     bindings.apply(r)
-    picker = ColorPicker(r, picker=HSV, color='black')
-    r.grid_rowconfigure(0, weight=1)
-    r.grid_columnconfigure(0, weight=1)
+    picker = ColorPicker(r, picker=HSV, background='black')
+    add_bindtags(picker, 'TestPicker')
+    r.grid_rowconfigure(0, weight=1, minsize=100)
+    r.grid_columnconfigure(0, weight=1, minsize=100)
     picker.grid(row=0, column=0, sticky='nsew')
-    print(picker())
-    try:
-        r.destroy()
-    except Exception:
-        pass
+    picker.wait_window()
 
 if os.environ.get('ALL'):
     def test_colorpalette():

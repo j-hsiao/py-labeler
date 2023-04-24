@@ -27,7 +27,7 @@ class Rect(Obj):
             master.create_rectangle(
                 x, y, x, y, fill=color,
                 outline=color,
-                stipple='gray12', activestipple='gray25',
+                stipple='gray50', activestipple='gray75',
                 width=3),
             RectSide(master, x, y, alt),
             RectSide(master, x, y, alt),

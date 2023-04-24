@@ -54,12 +54,14 @@ class RRect(Obj):
             master,
             master.create_polygon(
                 x-50,y,x+50,y,x+50,y,x-50,y, fill=color, outline=color,
-                stipple='gray12', activestipple='gray25', width=3),
+                stipple='gray50', activestipple='gray75', width=3),
             RRectHSide(master, x, y, alt),
             RRectHSide(master, x, y, alt),
             RRectVSide(master, x, y, alt),
             RRectVSide(master, x, y, alt),
-            master.create_line(x,y,x,y, fill=alt, arrow='last', state='disabled'),
+            master.create_line(
+                x,y,x,y, fill=alt, arrow='last', state='disabled',
+                arrowshape=(12, 15, 4)),
         )
         self.addtags(master, self.ids[:1], RRect.TAGS[:1])
         self.addtags(master, self.ids[-1:], ['disabled'])

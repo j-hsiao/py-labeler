@@ -235,6 +235,14 @@ class RGB(tk.Frame, object):
         """Return tk string var"""
         return self.cget('background')
 
+    def set_color(self, color):
+        print(color)
+        r, g, b = parse_color(self, color)
+        print(r, g, b)
+        self.red.set(str(r))
+        self.green.set(str(g))
+        self.blue.set(str(b))
+
     @bindings('', scope=scopes.Trace)
     def onchange(widget, var, index, op):
         r = widget.red.get()
@@ -331,6 +339,16 @@ class HSV(tk.Frame, object):
     def color(self):
         """Return tk string var"""
         return self.cget('background')
+
+    def set_color(self, color):
+        h, s, v = rgb2hsv(*parse_color(self, color))
+        self.hentry.delete(0, 'end')
+        self.hentry.insert(0, str(h))
+        self.sentry.delete(0, 'end')
+        self.sentry.insert(0, str(s))
+        self.ventry.delete(0, 'end')
+        self.ventry.insert(0, str(v))
+        self._sync_to_entry(True)
 
     def rgb(self):
         """Return r,g,b int tuple (0-255)."""
@@ -465,19 +483,23 @@ class HSV(tk.Frame, object):
 class ColorPicker(tk.Frame, object):
     binds = bindings['ColorPicker']
     def __init__(self, master, *args, **kwargs):
-        cls = kwargs.pop('picker', RGB)
-        color = kwargs.pop('color', 'black')
+        cls = kwargs.pop('picker', HSV)
+        kwargs.setdefault('background', 'black')
         super(ColorPicker, self).__init__(master, *args, **kwargs)
 
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.picker = cls(color, self, change_origin=self)
+        self.window = tk.Toplevel(self)
+        self.window.title('Pick a color')
+        self.window.grid_rowconfigure(0, weight=1)
+        self.window.grid_columnconfigure(0, weight=1)
+        self.window.grid_columnconfigure(1, weight=1)
+
+        self.picker = cls(
+            self.cget('background'), self.window, change_origin=self)
         self.submit = tk.Button(
-            self, text='submit',
+            self.window, text='submit',
             command=str(self.submitted.update(widget=(str(self), None))))
         self.cancel = tk.Button(
-            self, text='cancel',
+            self.window, text='cancel',
             command=str(self.canceled.update(widget=(str(self), None))))
 
         self.picker.grid(row=0, column=0, columnspan=2, sticky='nsew')
@@ -485,16 +507,24 @@ class ColorPicker(tk.Frame, object):
         self.cancel.grid(row=1, column=1, sticky='nsew')
         self.out = tk.StringVar(self)
         add_bindtags(self, 'ColorPicker')
+        self.window.withdraw()
 
-    def __call__(self):
+
+    @staticmethod
+    @binds.bind('<Button-1>')
+    def _select_color(widget):
         """Wait for a color to be submitted or canceled."""
-        orig = self.picker.color()
-        self.wait_variable(self.out)
-        result = self.out.get()
+        orig = widget.cget('background')
+        widget.window.deiconify()
+        widget.picker.set_color(orig)
+        widget.window.grab_set()
+        widget.wait_variable(widget.out)
+        widget.window.grab_release()
+        widget.window.withdraw()
+        result = widget.out.get()
         if result:
-            return result
-        else:
-            return orig
+            widget.configure(background=result)
+            widget.event_generate('<<ColorSelected>>')
 
     def color(self):
         return self.picker.color()
