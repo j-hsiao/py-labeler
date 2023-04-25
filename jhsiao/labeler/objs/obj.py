@@ -38,6 +38,7 @@ class Obj(object):
     """
     INFO = {}
     TOP = 'top'
+    HIDDEN = 'hidden'
     TAGS = ['Obj']
     IDX = 0
     binds = ibinds['Obj']
@@ -91,7 +92,7 @@ class Obj(object):
         tags = master.gettags(idn)
         idx = len(tags) - 1
         tag = tags[idx]
-        while tag == 'current' or tag == Obj.TOP:
+        while tag == 'current' or tag == Obj.TOP or tag == Obj.HIDDEN:
             idx -= 1
             tag = tags[idx]
         return tag
@@ -259,8 +260,8 @@ class Obj(object):
                     or tag == Obj.TOP
                     or tag.startswith('Composite')):
                 continue
-            widget.itemconfigure(tag, state='hidden')
-            widget.addtag('hidden', 'withtag', tag)
+            widget.itemconfigure(tag, state=Obj.HIDDEN)
+            widget.addtag(Obj.HIDDEN, 'withtag', tag)
             return
         else:
             raise Exception('Failed to find topbase tag.')

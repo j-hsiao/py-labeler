@@ -36,6 +36,8 @@ class LCanv(tk.Frame, object):
 
     @staticmethod
     @canvbinds.bind('<B1-Motion>')
-    def _entered(widget):
-        if not widget._changed:
-            widget._changed = True
+    def _modified(widget, x, y):
+        self = widget.master
+        if not self._changed:
+            self._changed = True
+        self.xhairs.moveto(widget, x, y)

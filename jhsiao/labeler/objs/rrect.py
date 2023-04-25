@@ -239,7 +239,7 @@ class RRectVSide(Obj):
             master,
             master.create_line(
                 x-50, y, x+50, y,
-                fill=color, width=1, activewidth=5))
+                fill=color, width=1, activewidth=4))
         self.addtags(master, self.ids, RRectVSide.TAGS)
 
     @staticmethod
@@ -260,6 +260,7 @@ class RRectVSide(Obj):
     @staticmethod
     @binds.bind('<Button-1>')
     def _select(widget, x, y):
+        widget.itemconfigure('current', activewidth=1)
         ids = RRectVSide.members(widget, 'current')
         RRect.selected(widget, ids)
         RRectVSide.snapto(widget, x, y)
@@ -291,6 +292,7 @@ class RRectVSide(Obj):
     @staticmethod
     @binds.bind('<ButtonRelease-1>')
     def _deselect(widget, x, y):
+        widget.itemconfigure('current', activewidth=4)
         ids = RRectVSide.members(widget, 'current')
         RRect.unselected(widget, ids)
         widget.master.xhairs.up(0, 1)
@@ -305,7 +307,7 @@ class RRectHSide(Obj):
             master,
             master.create_line(
                 x, y, x, y,
-                fill=color, width=1, activewidth=5))
+                fill=color, width=1, activewidth=4))
         self.addtags(master, self.ids, RRectHSide.TAGS)
 
     @staticmethod
@@ -321,6 +323,7 @@ class RRectHSide(Obj):
     @staticmethod
     @binds.bind('<Button-1>')
     def _select(widget, x, y):
+        widget.itemconfigure('current', activewidth=1)
         ids = RRectHSide.members(widget, 'current')
         RRect.selected(widget, ids)
         RRectHSide.snapto(widget, x, y)
@@ -364,6 +367,7 @@ class RRectHSide(Obj):
     @staticmethod
     @binds.bind('<ButtonRelease-1>')
     def _deselect(widget, x, y):
+        widget.itemconfigure('current', activewidth=4)
         ids = RRectHSide.members(widget, 'current')
         RRect.unselected(widget, ids)
         widget.master.xhairs.up(0, 1)

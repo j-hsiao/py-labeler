@@ -162,7 +162,7 @@ class RectSide(Obj):
         super(RectSide, self).__init__(
             master, master.create_line(
                 x, y, x, y,
-                width=1, activewidth=5, fill=color))
+                width=1, activewidth=4, fill=color))
         self.addtags(master, self.ids, RectSide.TAGS)
 
     @staticmethod
@@ -193,6 +193,7 @@ class RectSide(Obj):
     def _select(widget, x, y):
         Rect.selected(widget, RectSide.members(widget, 'current'))
         RectSide.snapto(widget, x, y)
+        widget.itemconfigure('current', activewidth=1)
 
     @staticmethod
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')
@@ -202,6 +203,7 @@ class RectSide(Obj):
     @staticmethod
     @binds.bind('<ButtonRelease-1>')
     def _normalize(widget, x, y):
+        widget.itemconfigure('current', activewidth=4)
         ids = RectSide.members(widget, 'current')
         Rect.unselected(widget, ids)
         idx = ids.index(widget.find('withtag', 'current')[0], 1)
