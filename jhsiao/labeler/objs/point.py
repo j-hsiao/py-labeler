@@ -14,7 +14,7 @@ class Point(Obj):
     binds = ibinds['Point']
 
     radius = 5
-    awidth = 10
+    awidth = 3
     def __init__(self, master, x, y, color='black'):
         radius = self.radius
         super(Point, self).__init__(
@@ -29,9 +29,10 @@ class Point(Obj):
     @staticmethod
     def colorkwargs(master, color):
         """Generate color dict for new color."""
+        alt = Obj.altcolor(master, color)
         return dict(
             fill=color, activeoutline=color,
-            outline=Obj.altcolor(master, color))
+            outline=alt, activefill=alt)
 
     @staticmethod
     def color(master, idn='current'):
@@ -81,7 +82,7 @@ class Point(Obj):
     @binds.bind('<Button-1>')
     def _select(widget, x, y):
         widget.itemconfigure(
-            'current', fill='', activewidth=1)
+            'current', fill='', activefill='', activewidth=1)
         Point.snapto(widget, x, y)
 
     @staticmethod
@@ -90,6 +91,7 @@ class Point(Obj):
         widget.itemconfigure(
             'current',
             fill=widget.itemcget('current', 'activeoutline'),
+            activefill=widget.itemcget('current', 'outline'),
             activewidth=Point.awidth)
 
     @staticmethod

@@ -61,12 +61,11 @@ class BGImage(object):
     @staticmethod
     @binds.bind('<Button-1>')
     def _create(widget, x, y):
-        x, y = Obj.canvxy(widget, x, y)
-        return
-        # TODO
-        # select item class and instantiate
-        #widget.event_generate('<ButtonRelease-1>', x, y)
-        #widget.event_generate('<Button-1>', x, y)
+        cx, cy = Obj.canvxy(widget, x, y)
+        lcanv = widget.master
+        lcanv.selector()(widget, cx, cy, lcanv.colorpicker.color())
+        widget.event_generate('<ButtonRelease-1>', x=x, y=y, when='tail')
+        widget.event_generate('<Button-1>', x=x, y=y, when='tail')
 
     @staticmethod
     @binds.bind('<Button-3>')

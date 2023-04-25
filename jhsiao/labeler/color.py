@@ -509,14 +509,13 @@ class ColorPicker(tk.Frame, object):
         add_bindtags(self, 'ColorPicker')
         self.window.withdraw()
 
-
     @staticmethod
     @binds.bind('<Button-1>')
     def _select_color(widget):
         """Wait for a color to be submitted or canceled."""
         orig = widget.cget('background')
-        widget.window.deiconify()
         widget.picker.set_color(orig)
+        widget.window.deiconify()
         widget.window.grab_set()
         widget.wait_variable(widget.out)
         widget.window.grab_release()
@@ -527,7 +526,7 @@ class ColorPicker(tk.Frame, object):
             widget.event_generate('<<ColorSelected>>')
 
     def color(self):
-        return self.picker.color()
+        return self.cget('background')
 
     def destroy(self):
         if self.winfo_exists():
