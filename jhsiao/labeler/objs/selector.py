@@ -1,4 +1,5 @@
 __all__ = ['ObjSelector']
+import copy
 import importlib
 import pkgutil
 
@@ -11,6 +12,7 @@ class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
         super(ObjSelector, self).__init__(master, *args, **kwargs)
         self.creating = False
+        self.classinfo = {}
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(2, weight=1)
@@ -75,6 +77,16 @@ class ObjSelector(tk.Frame, object):
         self._cls = Obj.classes.get(curname)
 
     @staticmethod
+    @bindings['ObjSelector.lst'].bind('<Double-Button-1>')
+    def _edit_classinfo(widget):
+        """Change class info dict."""
+        self = widget.master
+        curname = self.classname(widget.get(widget.curselection()[0]))
+        # TODO popup to edit info
+        self.classinfo[curname]
+
+
+    @staticmethod
     @bindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
     def _rm_component(widget):
         """Remove a component from composite list."""
@@ -134,6 +146,11 @@ class ObjSelector(tk.Frame, object):
     def reload(self):
         """Reload the list of classes (sorted order."""
         self.lst.delete(0, 'end')
+        for name, cls in Obj.classes.items():
+            try:
+                self.classinfo[name]
+            except KeyError:
+                self.classinfo[name] = copy.deepcopy(cls.INFO)
         toadd = [self.displayname(name) for name in Obj.classes]
         toadd.sort(key=str.lower)
         self.lst.insert('end', *toadd)

@@ -219,7 +219,7 @@ class Obj(object):
         """When clicked, set the current tag."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
-        widget.objid = idn
+        widget.master.set_obj(idn)
         widget.tag_raise(tag, 'Obj')
 
     # Leave/enter can cause an infinite loop mouse button because the

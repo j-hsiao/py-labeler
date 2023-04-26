@@ -480,12 +480,17 @@ class HSV(tk.Frame, object):
         self.change_origin.event_generate('<<ColorChange>>', when='head')
 
 
-class ColorPicker(tk.Frame, object):
+class ColorPicker(tk.Label, object):
     binds = bindings['ColorPicker']
     def __init__(self, master, *args, **kwargs):
         cls = kwargs.pop('picker', HSV)
         kwargs.setdefault('background', 'black')
         super(ColorPicker, self).__init__(master, *args, **kwargs)
+        r, g, b = parse_color(self, self.cget('background'))
+        self.configure(
+            foreground=format_color(
+                (r+127)%256, (g+127)%256, (b+127)%256),
+            text='Pick a color')
 
         self.window = tk.Toplevel(self)
         self.window.title('Pick a color')
@@ -523,6 +528,11 @@ class ColorPicker(tk.Frame, object):
         result = widget.out.get()
         if result:
             widget.configure(background=result)
+            r, g, b = parse_color(widget, result)
+            widget.configure(
+                foreground=format_color(
+                    (r+127)%256, (g+127)%256, (b+127)%256))
+
             widget.event_generate('<<ColorSelected>>')
 
     def color(self):
