@@ -1,4 +1,4 @@
-from jhsiao.labeler.objs import ObjSelector
+from jhsiao.labeler.selector import ObjSelector
 from jhsiao.tkutil import tk
 from jhsiao.labeler import bindings
 

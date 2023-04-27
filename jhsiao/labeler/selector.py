@@ -3,10 +3,12 @@ import copy
 import importlib
 import pkgutil
 
-from . import bindings, __path__
-from .obj import Obj
+from . import bindings
+from .objs import Obj, __path__
 from jhsiao.tkutil import tk, add_bindtags
-from .composite import make_composite
+from .objs.composite import make_composite
+from .dict import Dict
+from .ddict import DDict
 
 class ObjSelector(tk.Frame, object):
     def __init__(self, master, *args, **kwargs):
@@ -77,14 +79,48 @@ class ObjSelector(tk.Frame, object):
         self._cls = Obj.classes.get(curname)
 
     @staticmethod
-    @bindings['ObjSelector.lst'].bind('<Double-Button-1>')
+    @bindings['ObjSelector.lst'].bind('<Double-ButtonRelease-1>')
     def _edit_classinfo(widget):
         """Change class info dict."""
         self = widget.master
-        curname = self.classname(widget.get(widget.curselection()[0]))
-        # TODO popup to edit info
-        self.classinfo[curname]
+        if self.creating:
+            self._add_component(widget)
+        else:
+            curname = self.classname(widget.get(widget.curselection()[0]))
+            top = tk.Toplevel(widget)
+            top.title('Edit settings for {}'.format(curname))
+            d = Dict(top)
+            d.set(self.classinfo[curname])
+            submit = tk.Button(
+                top, text='submit',
+                command=str(self._submit_classedit.update(widget=(str(d), None))))
+            cancel = tk.Button(
+                top, text='cancel',
+                command=str(self._cancel_classedit.update(widget=(str(d), None))))
+            top.grid_rowconfigure(0, weight=1)
+            top.grid_columnconfigure(0, weight=1)
+            top.grid_columnconfigure(1, weight=1)
+            d.grid(row=0, column=0, sticky='nsew', columnspan=2)
+            submit.grid(row=1, column=0, sticky='nsew')
+            cancel.grid(row=1, column=1, sticky='nsew')
+            top.grab_set()
+            top.wait_window()
+            response = getattr(top, 'response', None)
+            if response:
+                self.classinfo[curname].update(response)
 
+    @bindings('')
+    def _submit_classedit(widget):
+        t = widget.master
+        t.response = widget.dict()
+        t.grab_release()
+        t.destroy()
+
+    @bindings('')
+    def _cancel_classedit(widget):
+        t = widget.master
+        t.grab_release()
+        t.destroy()
 
     @staticmethod
     @bindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
@@ -150,7 +186,7 @@ class ObjSelector(tk.Frame, object):
             try:
                 self.classinfo[name]
             except KeyError:
-                self.classinfo[name] = copy.deepcopy(cls.INFO)
+                self.classinfo[name] = DDict(cls.INFO)
         toadd = [self.displayname(name) for name in Obj.classes]
         toadd.sort(key=str.lower)
         self.lst.insert('end', *toadd)

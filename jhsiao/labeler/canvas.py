@@ -1,6 +1,7 @@
 from jhsiao.tkutil import tk, add_bindtags
 from . import bindings
-from .objs import Crosshairs, BGImage, ObjSelector, Obj
+from .objs import Crosshairs, BGImage, Obj
+from .selector import ObjSelector
 from .dict import Dict
 from .color import ColorPicker
 
