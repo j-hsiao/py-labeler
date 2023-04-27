@@ -16,10 +16,11 @@ from jhsiao.labeler.color import (
 )
 
 @bindings['TestPicker'].bind('<<ColorChange>>')
-def tempcolor(widget):
-    print(widget.color())
+def tempcolor(widget, data):
+    print('color changed to', data)
 @bindings['TestPicker'].bind('<<ColorSelected>>')
 def selected(widget):
+    print('selected color', widget.color())
     widget.master.destroy()
 
 def test_rgb():

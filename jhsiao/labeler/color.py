@@ -200,10 +200,6 @@ class RGB(tk.Frame, object):
         self.red = tk.StringVar(self, value=str(r))
         self.green = tk.StringVar(self, value=str(g))
         self.blue = tk.StringVar(self, value=str(b))
-        changed = self.onchange.update(widget=(str(self), None))
-        changed.trace(self, self.red, 'write')
-        changed.trace(self, self.green, 'write')
-        changed.trace(self, self.blue, 'write')
         kwargs = {'orient': 'horizontal', 'from': 0, 'to': 255}
         self.r = tk.Scale(self, variable=self.red, **kwargs)
         self.g = tk.Scale(self, variable=self.green, **kwargs)
@@ -230,15 +226,17 @@ class RGB(tk.Frame, object):
         self.re.grid(row=1, column=2, sticky='nsew')
         self.ge.grid(row=2, column=2, sticky='nsew')
         self.be.grid(row=3, column=2, sticky='nsew')
+        changed = self.onchange.update(widget=(str(self), None))
+        changed.trace(self, self.red, 'write')
+        changed.trace(self, self.green, 'write')
+        changed.trace(self, self.blue, 'write')
 
     def color(self):
         """Return tk string var"""
         return self.cget('background')
 
     def set_color(self, color):
-        print(color)
         r, g, b = parse_color(self, color)
-        print(r, g, b)
         self.red.set(str(r))
         self.green.set(str(g))
         self.blue.set(str(b))
@@ -251,9 +249,10 @@ class RGB(tk.Frame, object):
         r = clip(int(r) if r else 0, 0, 255)
         g = clip(int(g) if g else 0, 0, 255)
         b = clip(int(b) if b else 0, 0, 255)
-        widget.configure(background=format_color(r,g,b))
+        color=format_color(r,g,b)
+        widget.configure(background=color)
         widget.change_origin.event_generate(
-            '<<ColorChange>>', when='head')
+            '<<ColorChange>>', when='head', data=color)
 
     @bindings('', scope=scopes.Validation, data=(None, int))
     def intvalidate(widget, current, pending, data=None):
@@ -308,6 +307,19 @@ class HSV(tk.Frame, object):
         self.hentry = tk.Entry(self, validate='key')
         self.sentry = tk.Entry(self, validate='key')
         self.ventry = tk.Entry(self, validate='key')
+        self.hentry.insert(0, fstr(h*60))
+        self.sentry.insert(0, fstr(s))
+        self.ventry.insert(0, fstr(v/255))
+        svl.grid(row=0, column=0, sticky='nsew', rowspan=4)
+        hl.grid(row=0, column=1, sticky='nsew', rowspan=4)
+        hlabel.grid(row=1, column=2, sticky='nsew')
+        slabel.grid(row=2, column=2, sticky='nsew')
+        vlabel.grid(row=3, column=2, sticky='nsew')
+        self.hentry.grid(row=1, column=3, sticky='nsew')
+        self.sentry.grid(row=2, column=3, sticky='nsew')
+        self.ventry.grid(row=3, column=3, sticky='nsew')
+        svl.configure(width=200, height=200)
+
         self.hentry.configure(
             validatecommand=str(
                 self.floatvalidate.update(
@@ -323,18 +335,6 @@ class HSV(tk.Frame, object):
                 self.floatvalidate.update(
                     widget=(str(self.ventry),None),
                     data=(str(1.0),float))))
-        self.hentry.insert(0, fstr(h*60))
-        self.sentry.insert(0, fstr(s))
-        self.ventry.insert(0, fstr(v/255))
-        svl.grid(row=0, column=0, sticky='nsew', rowspan=4)
-        hl.grid(row=0, column=1, sticky='nsew', rowspan=4)
-        hlabel.grid(row=1, column=2, sticky='nsew')
-        slabel.grid(row=2, column=2, sticky='nsew')
-        vlabel.grid(row=3, column=2, sticky='nsew')
-        self.hentry.grid(row=1, column=3, sticky='nsew')
-        self.sentry.grid(row=2, column=3, sticky='nsew')
-        self.ventry.grid(row=3, column=3, sticky='nsew')
-        svl.configure(width=200, height=200)
 
     def color(self):
         """Return tk string var"""
@@ -403,9 +403,9 @@ class HSV(tk.Frame, object):
         picker.ventry.insert(0, fstr(v))
         picker.sentry.configure(validate='key')
         picker.ventry.configure(validate='key')
-        picker.configure(
-            background=format_color(*picker.svpalette[y, x, ::-1]))
-        picker.change_origin.event_generate('<<ColorChange>>', when='head')
+        color = format_color(*picker.svpalette[y, x, ::-1])
+        picker.configure(background=color)
+        picker.change_origin.event_generate('<<ColorChange>>', when='head', data=color)
 
 
     @bindings['HSV.h'].bind('<Configure>')
@@ -436,9 +436,9 @@ class HSV(tk.Frame, object):
         svx, svy = int(s*(svw-1)), int((1-v)*(svh-1))
         picker.svim.configure(
             data=draw_sv_selection(picker.svpalette, svx, svy))
-        picker.configure(
-            background=format_color(*picker.svpalette[svy, svx,::-1]))
-        picker.change_origin.event_generate('<<ColorChange>>', when='head')
+        color = format_color(*picker.svpalette[svy, svx,::-1])
+        picker.configure(background=color)
+        picker.change_origin.event_generate('<<ColorChange>>', when='head', data=color)
 
     @bindings('', scope=scopes.Validation, data=(None, float))
     def floatvalidate(widget, current, pending, data):
@@ -475,9 +475,9 @@ class HSV(tk.Frame, object):
         svx, svy = round(s*(svw-1)), round((1-v)*(svh-1))
         self.svim.configure(
             data=draw_sv_selection(self.svpalette, svx, svy))
-        self.configure(
-            background=format_color(*self.svpalette[svy, svx,::-1]))
-        self.change_origin.event_generate('<<ColorChange>>', when='head')
+        color = format_color(*self.svpalette[svy, svx,::-1])
+        self.configure(background=color)
+        self.change_origin.event_generate('<<ColorChange>>', when='head', data=color)
 
 
 class ColorPicker(tk.Label, object):
@@ -491,41 +491,33 @@ class ColorPicker(tk.Label, object):
             foreground=format_color(
                 (r+127)%256, (g+127)%256, (b+127)%256),
             text='Pick a color')
-
-        self.window = tk.Toplevel(self)
-        self.window.title('Pick a color')
-        self.window.grid_rowconfigure(0, weight=1)
-        self.window.grid_columnconfigure(0, weight=1)
-        self.window.grid_columnconfigure(1, weight=1)
-
-        self.picker = cls(
-            self.cget('background'), self.window, change_origin=self)
-        self.submit = tk.Button(
-            self.window, text='submit',
-            command=str(self.submitted.update(widget=(str(self), None))))
-        self.cancel = tk.Button(
-            self.window, text='cancel',
-            command=str(self.canceled.update(widget=(str(self), None))))
-
-        self.picker.grid(row=0, column=0, columnspan=2, sticky='nsew')
-        self.submit.grid(row=1, column=0, sticky='nsew')
-        self.cancel.grid(row=1, column=1, sticky='nsew')
-        self.out = tk.StringVar(self)
         add_bindtags(self, 'ColorPicker')
-        self.window.withdraw()
+        self.pickercls = cls
 
     @staticmethod
     @binds.bind('<Button-1>')
     def _select_color(widget):
         """Wait for a color to be submitted or canceled."""
         orig = widget.cget('background')
-        widget.picker.set_color(orig)
-        widget.window.deiconify()
-        widget.window.grab_set()
-        widget.wait_variable(widget.out)
-        widget.window.grab_release()
-        widget.window.withdraw()
-        result = widget.out.get()
+
+        window = tk.Toplevel(widget)
+        window.title('Pick a color')
+        window.grid_rowconfigure(0, weight=1)
+        window.grid_columnconfigure(0, weight=1)
+        window.grid_columnconfigure(1, weight=1)
+        picker = widget.pickercls(orig, window, change_origin=widget)
+        submit = tk.Button(
+            window, text='submit',
+            command=str(widget.submitted.update(widget=(str(picker), None))))
+        cancel = tk.Button(
+            window, text='cancel',
+            command=str(widget.canceled.update(widget=(str(picker), None))))
+        picker.grid(row=0, column=0, columnspan=2, sticky='nsew')
+        submit.grid(row=1, column=0, sticky='nsew')
+        cancel.grid(row=1, column=1, sticky='nsew')
+        window.grab_set()
+        window.wait_window()
+        result = getattr(window, 'result', None)
         if result:
             widget.configure(background=result)
             r, g, b = parse_color(widget, result)
@@ -538,15 +530,13 @@ class ColorPicker(tk.Label, object):
     def color(self):
         return self.cget('background')
 
-    def destroy(self):
-        if self.winfo_exists():
-            self.out.set('')
-            super(ColorPicker, self).destroy()
-
-    @bindings('').bind('')
+    @bindings('')
     def submitted(widget):
-        widget.out.set(widget.picker.color())
+        widget.master.result = widget.color()
+        widget.master.grab_release()
+        widget.master.destroy()
 
-    @bindings('').bind('')
+    @bindings('')
     def canceled(widget):
-        widget.out.set('')
+        widget.master.grab_release()
+        widget.master.destroy()
