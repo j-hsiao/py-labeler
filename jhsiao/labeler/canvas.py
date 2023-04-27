@@ -58,7 +58,8 @@ class LCanv(tk.Frame, object):
         self = widget.master
         if self.objid is not None:
             self._dict.set({})
-            del self.info[self.objid]
+            self.canv.focus_set()
+            self.info.pop(self.objid, None)
             widget.delete(Obj.toptag(widget, self.objid))
             self.objid = None
 
