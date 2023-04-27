@@ -1,7 +1,7 @@
 from collections import deque
 
-
 from . import Obj
+from ..ddict import DDict
 
 class Composite(Obj):
     """Composite of multiple different basic objects.
@@ -37,16 +37,37 @@ class Composite(Obj):
     @classmethod
     def data(cls, widget, idn, info):
         ids = cls.members(widget, idn)
+        xinfo = cls.sepinfo(info)
         return {
-            cls.__name__: cls.todict(
-                widget, ids[idx], info[cls.__name__])
+            c.__name__: c.todict(
+                widget, ids[idx], xinfo[c.__name__.replace('_', '')])
             for idx, c in zip(cls.IDNIDXS, cls.components)}
+
+    @classmethod
+    def sepinfo(cls, dct):
+        """Separate keys into separate dicts per class."""
+        xinfo = {c.__name__.replace('_', ''): DDict(c.INFO) for c in set(cls.components)}
+        for k, v in info.items():
+            try:
+                nm, nk = k.split('_', 1)
+            except TypeError:
+                xinfo[k] = v
+            else:
+                try:
+                    d = xinfo[nm]
+                except KeyError:
+                    xinfo[k] = v
+                else:
+                    d[nk] = v
+        return xinfo
+
 
     @classmethod
     def fromdict(cls, widget, dct, info):
         data = dct['data']
+        xinfo = cls.sepinfo(info)
         for c in cls.components:
-            sub = c.fromdict(widget, data[c.__name__], info[c.__name__])
+            sub = c.fromdict(widget, data[c.__name__], xinfo[c.__name__.replace('_','')])
             cls.addtags(widget, sub.ids, cls.TAGS)
 
     @classmethod
@@ -65,6 +86,7 @@ def make_composite(components, name=None):
     components: classes to use as comonents.
     name: the name of the resulting class.
         If None, use a concatenation of the components.
+        No underscores, they will be removed.
     """
     q = deque(components)
     idnidxs = [0]
@@ -78,12 +100,15 @@ def make_composite(components, name=None):
             idnidxs.append(idnidxs[-1]+c.IDNS)
     if not name:
         name = ''.join([cls.__name__ for cls in components])
-    newname = 'Composite' + name
+    newname = 'Composite' + name.replace('_', '')
     attrs = dict(
         IDNIDXS=idnidxs,
         TAGS=['{}_{{}}'.format(newname)],
         components=components,
-        INFO={cls.__name__: cls.INFO for cls in components},
+        INFO={
+            '_'.join((cls.__name__.replace('_', ''), key)): value
+            for cls in components
+            for key, value in cls.INFO.items()},
         IDX=components[0].IDX+1,
         IDNS=idnidxs[-1],
     )
