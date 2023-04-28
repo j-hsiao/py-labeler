@@ -39,15 +39,17 @@ class BGImage(object):
         """
         l, r = master.xview()
         t, b = master.yview()
+        rl, rt, rr, rb = map(int, master.cget('scrollregion').split())
         if r - l == 1:
-            owidth = self.im.width
+            owidth = rr-rl
         else:
             owidth = master.winfo_width()
         if b - t == 1:
-            oheight = self.im.height
+            oheight = rb-rt
         else:
             oheight = master.winfo_height()
-        height, width = self.raw.shape[:2]
+        height = self.raw.height
+        width = self.raw.width
         l *= width
         r *= width
         t *= height

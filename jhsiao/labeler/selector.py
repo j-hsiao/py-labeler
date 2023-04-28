@@ -107,7 +107,7 @@ class ObjSelector(tk.Frame, object):
             top.wait_window()
             response = getattr(top, 'response', None)
             if response:
-                self.classinfo[curname].update(response)
+                self.classinfo[curname][...] = response
 
     @bindings('')
     def _submit_classedit(widget):

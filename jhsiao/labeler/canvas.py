@@ -12,7 +12,12 @@ class LCanv(tk.Frame, object):
         self._changed = False
         self.objid = None
         self.info = {}
-        self.canv = tk.Canvas(self)
+        self.cframe = tk.Frame(self)
+        self.canv = tk.Canvas(self, border=0, highlightthickness=0)
+        self.yscroll = tk.Scrollbar(orient='vertical', command=self.yview)
+        self.xscroll = tk.Scrollbar(orient='horizontal', command=self.xview)
+        self.canv.configure(
+            xscrollcommand=self.xscroll.set, yscrollcommand=self.yscroll.set)
         add_bindtags(self.canv, 'LCanv.canv')
         self.bgim = BGImage(self.canv)
         self.xhairs = Crosshairs(self.canv)
@@ -32,9 +37,27 @@ class LCanv(tk.Frame, object):
         self.infoframe.grid_columnconfigure(0, weight=1)
         self.iteminfolabel.grid(row=0, column=0, sticky='nsew')
         self._dict.grid(row=1, column=0, sticky='nsew')
-        self.canv.grid(row=0, column=0, sticky='nsew', rowspan=self.grid_size()[1])
+        self.cframe.grid(row=0, column=0, sticky='nsew', rowspan=self.grid_size()[1])
+        self.canv.grid(row=0, column=0, sticky='nsew', in_=self.cframe)
+        self.xscroll.grid(row=1, column=0, sticky='nsew', in_=self.cframe)
+        self.yscroll.grid(row=0, column=1, sticky='nsew', in_=self.cframe)
+        self.cframe.grid_columnconfigure(0, weight=1)
+        self.cframe.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         bindings.apply(self.canv, methods=['tag_bind'], create=False)
+
+    def xview(self, *args):
+        ret = self.canv.xview(*args)
+        self.bgim.roi(self.canv)
+        return ret
+
+    def yview(self, *args):
+        ret = self.canv.yview(*args)
+        self.bgim.roi(self.canv)
+        return ret
+
+    def show(self, im):
+        return self.bgim.show(self.canv, im)
 
     def set_obj(self, idn):
         if idn != self.objid:
@@ -72,6 +95,20 @@ class LCanv(tk.Frame, object):
             Crosshairs.hide(widget)
 
     @staticmethod
+    @canvbinds.bind('<B>', '<b>')
+    def _sendtoback(widget):
+        self = widget.master
+        if self.objid is not None:
+            widget.tag_lower(Obj.toptag(widget, self.objid), 'Obj')
+
+    @staticmethod
+    @canvbinds.bind('<W>', '<w>', '<A>', '<a>', '<S>', '<s>', '<D>', '<d>')
+    def _moveleft(widget, x, y, keysym):
+        dif = dict(w=(0,-1), a=(-1,0), s=(0,1), d=(1,0))
+        dx, dy = dif[keysym.lower()]
+        widget.event_generate('<Motion>', x=x+dx, y=y+dy, when='tail', warp=True)
+
+    @staticmethod
     @canvbinds.bind('<Leave>')
     def _left(widget):
         Crosshairs.hide(widget)
@@ -88,3 +125,8 @@ class LCanv(tk.Frame, object):
         if not self._changed:
             self._changed = True
         self.xhairs.moveto(widget, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Configure>')
+    def _configured(widget):
+        widget.master.bgim.roi(widget)

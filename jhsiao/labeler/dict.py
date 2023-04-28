@@ -164,10 +164,10 @@ class Dict(tk.Frame):
         self.add_item()
         add_bindtags(self.dframe, 'DictFrame')
         add_bindtags(self.scrollcanv, 'DictCanv')
-        self.addbutton = tk.Button(self, text='+')
+        self.addbutton = tk.Button(
+            self, text='+', command=str(self._dplus.update(widget=(str(self),None))))
         self.klabel = tk.Label(self, text='keys')
         self.vlabel = tk.Label(self, text='values')
-        add_bindtags(self.addbutton, 'DictPlus')
 
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -250,6 +250,6 @@ class Dict(tk.Frame):
         widget.master.dframe.grid_columnconfigure(0, minsize=width)
 
     @staticmethod
-    @bindings['DictPlus'].bind('<ButtonRelease-1>', '<Return>', '<space>')
+    @bindings('')
     def _dplus(widget):
-        widget.master.add_item()
+        widget.add_item()

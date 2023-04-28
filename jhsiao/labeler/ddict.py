@@ -19,7 +19,10 @@ class DDict(object):
         del self.main[k]
 
     def __setitem__(self, k, v):
-        self.main[k] = v
+        if k == Ellipsis:
+            self.main = v
+        else:
+            self.main[k] = v
 
     def get(self, name, default=None):
         try:
