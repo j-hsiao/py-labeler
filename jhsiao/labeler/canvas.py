@@ -130,3 +130,90 @@ class LCanv(tk.Frame, object):
     @canvbinds.bind('<Configure>')
     def _configured(widget):
         widget.master.bgim.roi(widget)
+
+    #------------------------------
+    # scrolling
+    #------------------------------
+    @staticmethod
+    @canvbinds.bind('<Button-4>')
+    def _scrollup(widget, x, y):
+        widget.master._scrollupdown(widget, 1, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Button-5>')
+    def _scrolldown(widget, x, y):
+        widget.master._scrollupdown(widget, -1, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<MouseWheel>')
+    def _scrollupdown(widget, delta, x, y):
+        self = widget.master
+        if delta > 0:
+            self.yview('scroll', -1, 'units')
+        else:
+            self.yview('scroll', 1, 'units')
+        self.xhairs.moveto(widget, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Shift-Button-4>')
+    def _scrollleft(widget, x, y):
+        widget.master._scrollleftright(widget, 1, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Shift-Button-5>')
+    def _scrollright(widget, x, y):
+        widget.master._scrollleftright(widget, -1, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Shift-MouseWheel>')
+    def _scrollleftright(widget, delta, x, y):
+        self = widget.master
+        if delta > 0:
+            self.xview('scroll', -1, 'units')
+        else:
+            self.xview('scroll', 1, 'units')
+        self.xhairs.moveto(widget, x, y)
+
+    #------------------------------
+    # zooming
+    #------------------------------
+    @staticmethod
+    @canvbinds.bind('<Control-Button-4>')
+    def _zoomin(widget, x, y):
+        widget.master._zoominout(widget, 1, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Control-Button-5>')
+    def _zoomout(widget, x, y):
+        widget.master._zoominout(widget, -1, x, y)
+
+    @staticmethod
+    @canvbinds.bind('<Control-MouseWheel>')
+    def _scrollupdown(widget, delta, x, y):
+        if delta > 0:
+            factor = 1.25
+        else:
+            factor = .8
+        self = widget.master
+        scrollw, scrollh = map(int, widget.cget('scrollregion').split()[2:])
+        cx, cy = widget.canvasx(x), widget.canvasy(y)
+        fx, fy = cx/scrollw, cy/scrollh
+        ww, wh = widget.winfo_width(), widget.winfo_height()
+
+        nw = max(int(factor * scrollw), 1)
+        nh = max(int(factor * scrollh), 1)
+        widget.configure(scrollregion=(0, 0, nw, nh))
+
+        nx = fx * nw
+        ny = fy * nh
+        lx = max(nx - x, 0)
+        ty = max(ny - y, 0)
+        widget.xview('moveto', lx/nw)
+        widget.yview('moveto', ty/nh)
+        self.bgim.roi(widget)
+        self.xhairs.moveto(widget, x, y)
+
+        # TODO
+        # update objects coordinates.
+        xfactor = nw/scrollw
+        yfactor = nh/scrollh
