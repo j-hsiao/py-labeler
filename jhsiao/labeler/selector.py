@@ -41,11 +41,11 @@ class ObjSelector(tk.Frame, object):
 
         self.createbutton = tk.Button(
             self, text='create', state='disabled',
-            command=str(self._create.update(widget=(str(self), None))))
+            command=self._create.str(widget=self))
         self.createbutton.grid(row=2, column=2, columnspan=2, sticky='nsew')
         self.togglebutton = tk.Button(
             self, text='start creation',
-            command=str(self._toggle_creation.update(widget=(str(self), None))))
+            command=self._toggle_creation.str(widget=self))
         self.togglebutton.grid(row=2, column=0, columnspan=2, sticky='nsew')
 
         self.nframe = tk.Frame(self)
@@ -93,10 +93,10 @@ class ObjSelector(tk.Frame, object):
             d.set(self.classinfo[curname])
             submit = tk.Button(
                 top, text='submit',
-                command=str(self._submit_classedit.update(widget=(str(d), None))))
+                command=self._submit_classedit.str(widget=d))
             cancel = tk.Button(
                 top, text='cancel',
-                command=str(self._cancel_classedit.update(widget=(str(d), None))))
+                command=self._cancel_classedit.str(widget=d))
             top.grid_rowconfigure(0, weight=1)
             top.grid_columnconfigure(0, weight=1)
             top.grid_columnconfigure(1, weight=1)
@@ -124,11 +124,13 @@ class ObjSelector(tk.Frame, object):
 
     @staticmethod
     @bindings['ObjSelector.clst'].bind('<ButtonRelease-1>')
-    def _rm_component(widget):
+    def _rm_component(widget, y):
         """Remove a component from composite list."""
         self = widget.master
         if self.creating:
-            self.clst.delete(widget.curselection()[0])
+            pick = widget.nearest(y)
+            if pick >= 0:
+                self.clst.delete(pick)
 
     @staticmethod
     def displayname(classname):

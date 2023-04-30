@@ -204,7 +204,7 @@ class RGB(tk.Frame, object):
         self.r = tk.Scale(self, variable=self.red, **kwargs)
         self.g = tk.Scale(self, variable=self.green, **kwargs)
         self.b = tk.Scale(self, variable=self.blue, **kwargs)
-        valcmd = str(self.intvalidate.update(data=(str(255), int)))
+        valcmd = self.intvalidate.str(data=(255, int))
         self.re = tk.Entry(
             self, textvariable=self.red,
             validate='key', validatecommand=valcmd)
@@ -226,7 +226,7 @@ class RGB(tk.Frame, object):
         self.re.grid(row=1, column=2, sticky='nsew')
         self.ge.grid(row=2, column=2, sticky='nsew')
         self.be.grid(row=3, column=2, sticky='nsew')
-        changed = self.onchange.update(widget=(str(self), None))
+        changed = self.onchange.update(widget=self)
         changed.trace(self, self.red, 'write')
         changed.trace(self, self.green, 'write')
         changed.trace(self, self.blue, 'write')
@@ -321,20 +321,14 @@ class HSV(tk.Frame, object):
         svl.configure(width=200, height=200)
 
         self.hentry.configure(
-            validatecommand=str(
-                self.floatvalidate.update(
-                    widget=(str(self.hentry),None),
-                    data=(str(360),float))))
+            validatecommand=self.floatvalidate.str(
+                widget=self.hentry, data=(360,float)))
         self.sentry.configure(
-            validatecommand=str(
-                self.floatvalidate.update(
-                    widget=(str(self.sentry),None),
-                    data=(str(1.0),float))))
+            validatecommand=self.floatvalidate.str(
+                widget=self.sentry, data=(1.0,float)))
         self.ventry.configure(
-            validatecommand=str(
-                self.floatvalidate.update(
-                    widget=(str(self.ventry),None),
-                    data=(str(1.0),float))))
+            validatecommand=self.floatvalidate.str(
+                widget=self.ventry, data=(1.0,float)))
 
     def color(self):
         """Return tk string var"""
@@ -508,10 +502,10 @@ class ColorPicker(tk.Label, object):
         picker = widget.pickercls(orig, window, change_origin=widget)
         submit = tk.Button(
             window, text='submit',
-            command=str(widget.submitted.update(widget=(str(picker), None))))
+            command=widget.submitted.str(widget=picker))
         cancel = tk.Button(
             window, text='cancel',
-            command=str(widget.canceled.update(widget=(str(picker), None))))
+            command=widget.canceled.str(widget=picker))
         picker.grid(row=0, column=0, columnspan=2, sticky='nsew')
         submit.grid(row=1, column=0, sticky='nsew')
         cancel.grid(row=1, column=1, sticky='nsew')

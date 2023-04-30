@@ -165,7 +165,7 @@ class Dict(tk.Frame):
         add_bindtags(self.dframe, 'DictFrame')
         add_bindtags(self.scrollcanv, 'DictCanv')
         self.addbutton = tk.Button(
-            self, text='+', command=str(self._dplus.update(widget=(str(self),None))))
+            self, text='+', command=self._dplus.str(widget=self))
         self.klabel = tk.Label(self, text='keys')
         self.vlabel = tk.Label(self, text='values')
 
