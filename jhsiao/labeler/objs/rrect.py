@@ -73,7 +73,7 @@ class RRect(Obj):
 
     @staticmethod
     def recolor(master, color, idn='current'):
-        ids = RRect.members(idn, 'current')
+        ids = RRect.members(master, idn)
         alt = Obj.altcolor(master, color)
         master.itemconfigure(ids[0], fill=color, outline=color)
         master.itemconfigure(ids[1], fill=alt)

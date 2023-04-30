@@ -47,11 +47,11 @@ class Rect(Obj):
 
     @staticmethod
     def recolor(master, color, idn='current'):
-        ids = Rect.members(master, 'current')
-        master.itemconfigure(fill=color, outline=color)
+        ids = Rect.members(master, idn)
+        master.itemconfigure(ids[0], fill=color, outline=color)
         alt = Obj.altcolor(master, color)
         for sid in ids[1:5]:
-            master.itemconfigure(fill=alt)
+            master.itemconfigure(sid, fill=alt)
         for pid in ids[5:]:
             RectPt.recolor(master, color, pid)
 

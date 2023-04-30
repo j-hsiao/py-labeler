@@ -29,10 +29,10 @@ class Composite(Obj):
         return cls.components[0].color(widget, idn)
 
     @classmethod
-    def recolor(cls, widget, idn, newcolor):
+    def recolor(cls, widget, newcolor, idn):
         ids = cls.members(widget, idn)
         for idx, c in zip(cls.IDNIDXS, cls.components):
-            c.recolor(widget, ids[idx], newcolor)
+            c.recolor(widget, newcolor, ids[idx])
 
     @classmethod
     def data(cls, widget, idn, info):

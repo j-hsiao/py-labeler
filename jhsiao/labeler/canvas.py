@@ -5,6 +5,21 @@ from .selector import ObjSelector
 from .dict import Dict
 from .color import ColorPicker
 
+class CanvInfo(tk.Frame, object):
+    def __init__(self, *args, **kwargs):
+        super(CanvInfo, self).__init__(*args, **kwargs)
+        self.lxy = tk.Label(self, text='x, y:')
+        self.lzoom = tk.Label(self, text='zoom:')
+        self.xy = tk.Label(self, text='y')
+        self.zoom = tk.Label(self, text='tit%')
+
+        for col, l in enumerate((
+                self.lxy, self.xy, None, self.lzoom, self.zoom)):
+            if l is None:
+                self.grid_columnconfigure(col, weight=1)
+            else:
+                l.grid(row=0, column=col, sticky='nsew')
+
 class LCanv(tk.Frame, object):
     canvbinds = bindings['LCanv.canv']
     def __init__(self, master, *args, **kwargs):
@@ -26,6 +41,7 @@ class LCanv(tk.Frame, object):
         self.infoframe = tk.Frame(self, border=2, relief='sunken')
         self._dict = Dict(self.infoframe)
         self.iteminfolabel = tk.Label(self.infoframe, text='Object info')
+        self.cinfo = CanvInfo(self)
 
         self.selector.grid(row=0, column=1, sticky='nsew')
         self.grid_rowconfigure(0, weight=1)
@@ -41,6 +57,9 @@ class LCanv(tk.Frame, object):
         self.canv.grid(row=0, column=0, sticky='nsew', in_=self.cframe)
         self.xscroll.grid(row=1, column=0, sticky='nsew', in_=self.cframe)
         self.yscroll.grid(row=0, column=1, sticky='nsew', in_=self.cframe)
+        self.cinfo.grid(
+            row=2, column=0, sticky='nsew',
+            in_=self.cframe, columnspan=2)
         self.cframe.grid_columnconfigure(0, weight=1)
         self.cframe.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -57,6 +76,7 @@ class LCanv(tk.Frame, object):
         return ret
 
     def show(self, im):
+        self.cinfo.zoom.configure(text='100%')
         return self.bgim.show(self.canv, im)
 
     def set_obj(self, idn):
@@ -102,6 +122,15 @@ class LCanv(tk.Frame, object):
             widget.tag_lower(Obj.toptag(widget, self.objid), 'Obj')
 
     @staticmethod
+    @canvbinds.bind('<C>', '<c>')
+    def _recolor_obj(widget):
+        self = widget.master
+        if self.objid is not None:
+            clsname, idn = Obj.parsetag(Obj.toptag(widget, self.objid))
+            Obj.classes[clsname].recolor(
+                widget, self.colorpicker.color(), self.objid)
+
+    @staticmethod
     @canvbinds.bind('<W>', '<w>', '<A>', '<a>', '<S>', '<s>', '<D>', '<d>')
     def _moveleft(widget, x, y, keysym):
         dif = dict(w=(0,-1), a=(-1,0), s=(0,1), d=(1,0))
@@ -117,6 +146,10 @@ class LCanv(tk.Frame, object):
     @canvbinds.bind('<Motion>')
     def _movexhairs(widget, x, y):
         widget.master.xhairs.moveto(widget, x, y)
+        widget.master.cinfo.xy.configure(
+            text='{:3d}, {:3d}'.format(
+                int(widget.canvasx(x)),
+                int(widget.canvasy(y))))
 
     @staticmethod
     @canvbinds.bind('<B1-Motion>')
@@ -124,7 +157,7 @@ class LCanv(tk.Frame, object):
         self = widget.master
         if not self._changed:
             self._changed = True
-        self.xhairs.moveto(widget, x, y)
+        self._movexhairs(widget, x, y)
 
     @staticmethod
     @canvbinds.bind('<Configure>')
@@ -147,12 +180,15 @@ class LCanv(tk.Frame, object):
     @staticmethod
     @canvbinds.bind('<MouseWheel>')
     def _scrollupdown(widget, delta, x, y):
+        if widget.yview() == (0,1):
+            # prevent scrolling when fully visible
+            return
         self = widget.master
         if delta > 0:
             self.yview('scroll', -1, 'units')
         else:
             self.yview('scroll', 1, 'units')
-        self.xhairs.moveto(widget, x, y)
+        self._movexhairs(widget, x, y)
 
     @staticmethod
     @canvbinds.bind('<Shift-Button-4>')
@@ -167,12 +203,15 @@ class LCanv(tk.Frame, object):
     @staticmethod
     @canvbinds.bind('<Shift-MouseWheel>')
     def _scrollleftright(widget, delta, x, y):
+        if widget.xview() == (0,1):
+            # prevent scrolling when fully visible
+            return
         self = widget.master
         if delta > 0:
             self.xview('scroll', -1, 'units')
         else:
             self.xview('scroll', 1, 'units')
-        self.xhairs.moveto(widget, x, y)
+        self._movexhairs(widget, x, y)
 
     #------------------------------
     # zooming
@@ -189,31 +228,62 @@ class LCanv(tk.Frame, object):
 
     @staticmethod
     @canvbinds.bind('<Control-MouseWheel>')
-    def _scrollupdown(widget, delta, x, y):
-        if delta > 0:
-            factor = 1.25
-        else:
-            factor = .8
-        self = widget.master
+    def _zoominout(widget, delta, x, y):
         scrollw, scrollh = map(int, widget.cget('scrollregion').split()[2:])
-        cx, cy = widget.canvasx(x), widget.canvasy(y)
-        fx, fy = cx/scrollw, cy/scrollh
-        ww, wh = widget.winfo_width(), widget.winfo_height()
+        self = widget.master
+        rawim = self.bgim.raw
+        curfx = scrollw/rawim.width
+        curfy = scrollh/rawim.height
+        if delta > 0:
+            factor = (round(curfx*10)+1)/10
+        else:
+            factor = (round(curfx*10)-1)/10
+        factor = max(factor, .1)
+        widget.master._set_zoom(
+            factor*rawim.width / scrollw,
+            factor*rawim.height / scrollh, x, y)
 
-        nw = max(int(factor * scrollw), 1)
-        nh = max(int(factor * scrollh), 1)
-        widget.configure(scrollregion=(0, 0, nw, nh))
+    @staticmethod
+    @canvbinds.bind('<R>', '<r>')
+    def _reset_zoom(widget, x, y):
+        scrollw, scrollh = map(int, widget.cget('scrollregion').split()[2:])
+        self = widget.master
+        rawim = self.bgim.raw
+        self._set_zoom(rawim.width/scrollw, rawim.height/scrollh, x, y)
+
+    def _set_zoom(self, factorx, factory, x, y):
+        canv = self.canv
+        scrollw, scrollh = map(int, canv.cget('scrollregion').split()[2:])
+        cx, cy = canv.canvasx(x), canv.canvasy(y)
+        fx, fy = cx/scrollw, cy/scrollh
+        ww, wh = canv.winfo_width(), canv.winfo_height()
+
+        nw = max(int(factorx * scrollw), 1)
+        nh = max(int(factory * scrollh), 1)
+        canv.configure(scrollregion=(0, 0, nw, nh))
 
         nx = fx * nw
         ny = fy * nh
         lx = max(nx - x, 0)
         ty = max(ny - y, 0)
-        widget.xview('moveto', lx/nw)
-        widget.yview('moveto', ty/nh)
-        self.bgim.roi(widget)
-        self.xhairs.moveto(widget, x, y)
+        canv.xview('moveto', lx/nw)
+        canv.yview('moveto', ty/nh)
+        self.bgim.roi(canv)
+        self._movexhairs(canv, x, y)
+        self.cinfo.zoom.configure(
+            text='{:3d}%'.format(int(100*nw/self.bgim.raw.width)))
 
-        # TODO
-        # update objects coordinates.
-        xfactor = nw/scrollw
-        yfactor = nh/scrollh
+        factors = nw/scrollw, nh/scrollh
+        for idn in canv.find('withtag', 'Obj'):
+            tp = canv.type(idn)
+            coords = canv.coords(idn)
+            if tp == 'oval' and 'Point' in canv.gettags(idn):
+                l, t, r, b = coords
+                cx, cy = 0.5*(l+r), 0.5*(t+b)
+                ncx, ncy = factors[0]*cx, factors[1]*cy
+                dx, dy = ncx-cx, ncy-cy
+                canv.coords(idn, l+dx, t+dy, r+dx, b+dy)
+            else:
+                canv.coords(
+                    idn, *[factors[i%2] * c for i, c in enumerate(coords)])
+

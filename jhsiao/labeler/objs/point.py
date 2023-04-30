@@ -55,7 +55,7 @@ class Point(Obj):
 
     @staticmethod
     def activate(widget, ids):
-        widget.itemconfigure(ids[0], width=2)
+        widget.itemconfigure(ids[0], width=4)
 
     @staticmethod
     def deactivate(widget, ids):
