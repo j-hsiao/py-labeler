@@ -1,4 +1,10 @@
-class DDict(object):
+import sys
+if sys.version_info.major > 2:
+    from collections.abc import Mapping
+else:
+    from collections import Mapping
+
+class DDict(Mapping):
     """Wrap dict."""
     def __init__(self, *dicts):
         self.baks = dicts
@@ -35,6 +41,9 @@ class DDict(object):
 
     def __len__(self):
         return len(list(self.keys()))
+
+    def __iter__(self):
+        return self.keys()
 
     def update(self, *args, **kwargs):
         for k, v in dict(*args, **kwargs).items():

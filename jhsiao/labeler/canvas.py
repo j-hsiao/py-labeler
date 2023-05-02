@@ -1,9 +1,11 @@
+from __future__ import print_function
 from jhsiao.tkutil import tk, add_bindtags
 from . import bindings
 from .objs import Crosshairs, BGImage, Obj
 from .selector import ObjSelector
 from .dict import Dict
 from .color import ColorPicker
+import copy
 
 class CanvInfo(tk.Frame, object):
     def __init__(self, *args, **kwargs):
@@ -64,6 +66,27 @@ class LCanv(tk.Frame, object):
         self.cframe.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         bindings.apply(self.canv, methods=['tag_bind'], create=False)
+
+    def info(self):
+        """Get the current info."""
+        canv = self.canv
+        selector = self.selector
+        ret = {}
+        classinfo = ret['classinfo'] = {
+            k: copy.deepcopy(dict(v))
+            for k, v in selector.classinfo.items()}
+        data = data['data'] = {}
+        for idn in Obj.tops(canv):
+            cls, idn2 = Obj.parsetag(Obj.toptag(canv, idn))
+            if idn != idn2:
+                print('Warning, object ids do not match')
+            try:
+                lst = data[cls]
+            except KeyError:
+                lst = data[cls] = []
+            lst.append(
+                Obj.classes[cls].todict(canv, idn, classinfo[cls]))
+        return ret
 
     def xview(self, *args):
         ret = self.canv.xview(*args)

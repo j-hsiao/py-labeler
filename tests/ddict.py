@@ -19,3 +19,8 @@ def test_ddict():
     assert d2 == od2
 
     assert dict(d.items()) == {'a':0, 'b':2, 'c':3, 69:42, 'd':5}
+
+    assert set(d) == set().union('abcd', [69])
+    d2 = DDict(d)
+    assert set(d) == set().union('abcd', [69])
+    print(dict(d2))
