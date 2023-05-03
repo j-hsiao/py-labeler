@@ -2,6 +2,7 @@ from __future__ import print_function
 from jhsiao.tkutil import tk, add_bindtags
 from . import bindings
 from .objs import Crosshairs, BGImage, Obj
+from .objs.composite import make_composite
 from .selector import ObjSelector
 from .dict import Dict
 from .color import ColorPicker
@@ -87,6 +88,20 @@ class LCanv(tk.Frame, object):
             lst.append(
                 Obj.classes[cls].todict(canv, idn, classinfo[cls]))
         return ret
+
+    def restore(self, info):
+        data = info['data']
+        for cls, cinfo in info['classinfo'].items():
+            try:
+                c = Obj.classes[cls]
+            except KeyError:
+                if cls.startswith('Composite'):
+                    make_composite(cinfo['components'], cls[len('Composite'):])
+                    self.selector.reload()
+                else:
+                    raise
+            for d in data[cls]:
+                c.fromdict(self,canv, d)
 
     def xview(self, *args):
         ret = self.canv.xview(*args)

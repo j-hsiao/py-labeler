@@ -101,14 +101,16 @@ def make_composite(components, name=None):
     if not name:
         name = ''.join([cls.__name__ for cls in components])
     newname = 'Composite' + name.replace('_', '')
+    info = {
+        '_'.join((cls.__name__.replace('_', ''), key)): value
+        for cls in components
+        for key, value in cls.INFO.items()}
+    info['components'] = [c.__name__ for c in components]
     attrs = dict(
         IDNIDXS=idnidxs,
         TAGS=['{}_{{}}'.format(newname)],
+        INFO=info,
         components=components,
-        INFO={
-            '_'.join((cls.__name__.replace('_', ''), key)): value
-            for cls in components
-            for key, value in cls.INFO.items()},
         IDX=components[0].IDX+1,
         IDNS=idnidxs[-1],
     )
