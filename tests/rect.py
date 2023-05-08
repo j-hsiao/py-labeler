@@ -2,8 +2,15 @@ from jhsiao.labeler import bindings
 from jhsiao.labeler.objs.rect import Rect, RectPt
 from jhsiao.tkutil import tk
 
+class Dummy(tk.Tk, object):
+    def __init__(self, *args, **kwargs):
+        super(Dummy, self).__init__(*args, **kwargs)
+        self.objid = None
+    def set_obj(self, idn):
+        self.objid = idn
+
 def test_rect():
-    r = tk.Tk()
+    r = Dummy()
     c = tk.Canvas(r)
     bindings.apply(c)
     c.grid()

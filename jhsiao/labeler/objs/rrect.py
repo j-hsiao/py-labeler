@@ -44,7 +44,8 @@ class RRect(Obj):
         'x,y, leftwidth, right width)'
     ))
     INFO = {'format': 'cxywha', 'angle': 'radians'}
-    TAGS = ['RRect', 'RRect_{}']
+    TAGS = ['RRect']
+    TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)
     IDNS = 6
     binds = ibinds['RRect']

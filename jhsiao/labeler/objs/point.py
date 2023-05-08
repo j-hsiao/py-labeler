@@ -7,7 +7,8 @@ from . import ibinds
 @Obj.register
 class Point(Obj):
     HELP = 'A point. (x, y)'
-    TAGS = ['Point', 'Point_{}']
+    TAGS = ['Point']
+    TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX  + len(TAGS)
     IDNS = 1
 
@@ -52,6 +53,10 @@ class Point(Obj):
     def fromdict(widget, dct, info):
         x, y = dct['data']
         return Point(widget, x, y, dct['color'])
+
+    @staticmethod
+    def interpolate(dct1, dct2, info1, info2, frac):
+        return Obj.interp(frac, dct1['data'], dct2['data'])
 
     @staticmethod
     def activate(widget, ids):

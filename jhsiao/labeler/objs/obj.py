@@ -41,6 +41,7 @@ class Obj(object):
     HIDDEN = 'hidden'
     TAGS = ['Obj']
     IDX = 0
+    SEP = ':'
     binds = ibinds['Obj']
     classes = dict()
     IDNS = 0
@@ -79,12 +80,12 @@ class Obj(object):
     @staticmethod
     def parsetag(tag):
         """Parse an Obj tag into class and index."""
-        cls, idn = tag.rsplit('_', 1)
+        cls, idn = tag.rsplit(Obj.SEP, 1)
         return cls, int(idn)
 
     @staticmethod
     def parseid(tag):
-        return int(tag.rsplit('_', 1)[-1])
+        return int(tag.rsplit(Obj.SEP, 1)[-1])
 
     @staticmethod
     def toptag(master, idn):
@@ -100,7 +101,7 @@ class Obj(object):
     @staticmethod
     def topid(master, idn):
         """Get the toplevel Obj's item id."""
-        return int(Obj.toptag(master, idn).rsplit('_', 1)[-1])
+        return int(Obj.toptag(master, idn).rsplit(Obj.SEP, 1)[-1])
 
     @staticmethod
     def topitems(master):
@@ -113,6 +114,10 @@ class Obj(object):
     def idtag(cls, master, idn):
         """Extract the class id tag."""
         return master.gettags(idn)[cls.IDX]
+
+    @staticmethod
+    def make_idtag(maintag):
+        return Obj.SEP.join((maintag, '{}'))
 
     @classmethod
     def members(cls, widget, idn, idx=None):
@@ -182,21 +187,49 @@ class Obj(object):
     def data(widget, idn, info):
         """Return a sequence of data represented by the Obj.
 
-        info: the corresponding info instance.
+        info: the class info
         """
         raise NotImplementedError
 
     @classmethod
     def todict(cls, widget, idn, info):
-        """Convert data to dict."""
+        """Convert data to dict.
+
+        widget: the canvas widget.
+        idn: the top-level idn
+        info: class info
+        """
         return dict(
             data=cls.data(widget, idn, fmt),
             color=cls.color(widget, idn))
 
     @staticmethod
     def fromdict(widget, dct, info):
-        """Restore from a dict."""
+        """Restore from a dict.
+
+        dct: result from `todict()`
+        info: the class info.
+        """
         raise NotImplementedError
+
+    @staticmethod
+    def interpolate(dct1, dct2, info, frac):
+        """Interpolate between dct1 and dct2 by frac.
+
+        dct1, dct2: dicts from todict()
+        info: class info
+        frac is the weight of dct1.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def interp(w, data1, data2):
+        """Interpolate values between data1 and data2.
+
+        data[1|2]: tuple of floats
+        frac: weight for data1
+        """
+        return [(d1-d2)*w + d2 for d1, d2 in zip(data1, data2)]
 
     @staticmethod
     def activate(widget, ids):

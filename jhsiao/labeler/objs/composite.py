@@ -18,6 +18,8 @@ class Composite(Obj):
     harder to interact with if they are covered by other components.
     You can just hide them to access the components below.
     """
+    PREFIX = 'Composite'
+
     def __init__(self, master, x, y, color='black'):
         super(Composite, self).__init__(
             master,
@@ -40,16 +42,16 @@ class Composite(Obj):
         xinfo = cls.sepinfo(info)
         return {
             c.__name__: c.todict(
-                widget, ids[idx], xinfo[c.__name__.replace('_', '')])
+                widget, ids[idx], xinfo[c.__name__])
             for idx, c in zip(cls.IDNIDXS, cls.components)}
 
     @classmethod
     def sepinfo(cls, dct):
         """Separate keys into separate dicts per class."""
-        xinfo = {c.__name__.replace('_', ''): DDict(c.INFO) for c in set(cls.components)}
+        xinfo = {c.__name__: DDict(c.INFO) for c in set(cls.components)}
         for k, v in info.items():
             try:
-                nm, nk = k.split('_', 1)
+                nm, nk = k.split(':', 1)
             except TypeError:
                 xinfo[k] = v
             else:
@@ -61,13 +63,12 @@ class Composite(Obj):
                     d[nk] = v
         return xinfo
 
-
     @classmethod
     def fromdict(cls, widget, dct, info):
         data = dct['data']
         xinfo = cls.sepinfo(info)
         for c in cls.components:
-            sub = c.fromdict(widget, data[c.__name__], xinfo[c.__name__.replace('_','')])
+            sub = c.fromdict(widget, data[c.__name__], xinfo[c.__name__])
             cls.addtags(widget, sub.ids, cls.TAGS)
 
     @classmethod
@@ -100,18 +101,19 @@ def make_composite(components, name=None):
             idnidxs.append(idnidxs[-1]+c.IDNS)
     if not name:
         name = ''.join([cls.__name__ for cls in components])
-    newname = 'Composite' + name.replace('_', '')
+    if not name.startswith(Composite.PREFIX):
+        name = Composite.PREFIX + name
     info = {
-        '_'.join((cls.__name__.replace('_', ''), key)): value
+        ':'.join((cls.__name__, key)): value
         for cls in components
         for key, value in cls.INFO.items()}
     info['components'] = [c.__name__ for c in components]
     attrs = dict(
         IDNIDXS=idnidxs,
-        TAGS=['{}_{{}}'.format(newname)],
+        TAGS=[Obj.make_idtag(name)],
         INFO=info,
         components=components,
         IDX=components[0].IDX+1,
         IDNS=idnidxs[-1],
     )
-    return Obj.register(type(newname, (Composite,), attrs))
+    return Obj.register(type(name, (Composite,), attrs))

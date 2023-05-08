@@ -16,7 +16,8 @@ class Rect(Obj):
         'followed by width and height.'
     ))
     INFO = {'format': 'ltrb'}
-    TAGS = ['Rect', 'Rect_{}']
+    TAGS = ['Rect']
+    TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)
     IDNS = 9
     binds = ibinds['Rect']
@@ -80,7 +81,7 @@ class Rect(Obj):
             return l, t, r, b
 
     @staticmethod
-    def fromdict(widget, dct, info):
+    def parse(dct, info):
         fmt = info.get('format')
         if fmt == 'cxywh':
             x, y, w, h = dct['data']
@@ -94,9 +95,21 @@ class Rect(Obj):
             b = t+h
         else:
             l, t, r, b = dct['data']
+        return l, t, r, b
+
+    @staticmethod
+    def fromdict(widget, dct, info):
+        l, t, r, b = Rect.parse(dct, info)
         ret = Rect(widget, l, t, dct['color'])
         Rect.moveto(widget, ret.idns, l, t, r, b)
         return ret
+
+    @staticmethod
+    def interpolate(dct1, dct2, info1, info2, frac):
+        return Obj.interp(
+            frac,
+            Rect.parse(dct1, info1),
+            Rect.parse(dct2, info2))
 
     @staticmethod
     def activate(widget, ids):
