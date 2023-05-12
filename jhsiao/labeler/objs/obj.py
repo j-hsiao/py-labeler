@@ -184,15 +184,32 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def data(widget, idn, info):
-        """Return a sequence of data represented by the Obj.
+    def coords(widget, idn):
+        """Return a sequence of canonical data for the Obj from Canvas.
 
-        info: the class info
+        Canonical coordinates means x,y points.  This format is most
+        easily used in the Canvas and for interpolation.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def from_coords(widget, coords, info):
+        """Convert coords format into some other format.
+
+        info: the class dict INFO.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def to_coords(widget, coords, info):
+        """Convert other format to coords format.
+
+        info: the class dict INFO.
         """
         raise NotImplementedError
 
     @classmethod
-    def todict(cls, widget, idn, info):
+    def to_dict(cls, widget, idn, info):
         """Convert data to dict.
 
         widget: the canvas widget.
@@ -200,17 +217,24 @@ class Obj(object):
         info: class info
         """
         return dict(
-            data=cls.data(widget, idn, fmt),
+            data=cls.from_coords(widget, cls.coords(widget, idn), info),
             color=cls.color(widget, idn))
 
+    @classmethod
+    def parse_dict(cls, widget, dct, info):
+        """Parse a dict to retrieve coords and color."""
+        return cls.to_coors(widget, dct['data'], info), dct['color']
+
     @staticmethod
-    def fromdict(widget, dct, info):
+    def from_dict(widget, coords, color):
         """Restore from a dict.
 
         dct: result from `todict()`
         info: the class info.
         """
         raise NotImplementedError
+
+
 
     @staticmethod
     def interpolate(dct1, dct2, info, frac):
@@ -220,15 +244,7 @@ class Obj(object):
         info: class info
         frac is the weight of dct1.
         """
-        raise NotImplementedError
 
-    @staticmethod
-    def interp(w, data1, data2):
-        """Interpolate values between data1 and data2.
-
-        data[1|2]: tuple of floats
-        frac: weight for data1
-        """
         return [(d1-d2)*w + d2 for d1, d2 in zip(data1, data2)]
 
     @staticmethod
