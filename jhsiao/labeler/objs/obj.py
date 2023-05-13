@@ -197,25 +197,29 @@ class Obj(object):
         """Convert coords format into some other format.
 
         info: the class dict INFO.
+        default: assume already in coords format.
         """
-        raise NotImplementedError
+        return coords
 
     @staticmethod
     def to_coords(widget, coords, info):
         """Convert other format to coords format.
 
         info: the class dict INFO.
+        default: assume already in coords format.
         """
-        raise NotImplementedError
+        return coords
 
-    @classmethod
-    def to_dict(cls, widget, idn, info):
+    @staticmethod
+    def to_dict(widget, idn, info):
         """Convert data to dict.
 
         widget: the canvas widget.
         idn: the top-level idn
         info: class info
         """
+        cls, idn = Obj.parsetag(Obj.toptag(widget, idn))
+        cls = Obj.classes[cls]
         return dict(
             data=cls.from_coords(widget, cls.coords(widget, idn), info),
             color=cls.color(widget, idn))
@@ -223,7 +227,7 @@ class Obj(object):
     @classmethod
     def parse_dict(cls, widget, dct, info):
         """Parse a dict to retrieve coords and color."""
-        return cls.to_coors(widget, dct['data'], info), dct['color']
+        return cls.to_coord(widget, dct['data'], info), dct['color']
 
     @staticmethod
     def from_dict(widget, coords, color):
@@ -233,8 +237,6 @@ class Obj(object):
         info: the class info.
         """
         raise NotImplementedError
-
-
 
     @staticmethod
     def interpolate(dct1, dct2, info, frac):

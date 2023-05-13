@@ -45,14 +45,14 @@ class Point(Obj):
             idn, **Point.colorkwargs(widget, color))
 
     @staticmethod
-    def data(widget, idn, info):
+    def coords(widget, idn, info):
         l, t, r, b = widget.coords(idn)
         return (l+r)//2, (t+b)//2
 
     @staticmethod
-    def fromdict(widget, dct, info):
-        x, y = dct['data']
-        return Point(widget, x, y, dct['color'])
+    def fromdict(widget, coords, color):
+        x, y = coords
+        return Point(widget, x, y, color)
 
     @staticmethod
     def interpolate(dct1, dct2, info1, info2, frac):
@@ -76,7 +76,7 @@ class Point(Obj):
     def snapto(widget, x, y, idn='current'):
         """Snap mouse to center of point."""
         Obj.snapto(
-            widget, x, y, Point.data(widget, idn, None))
+            widget, x, y, Point.coords(widget, idn, None))
 
     @staticmethod
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')
