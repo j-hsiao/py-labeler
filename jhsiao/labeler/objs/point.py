@@ -11,6 +11,7 @@ class Point(Obj):
     TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX  + len(TAGS)
     IDNS = 1
+    NCOORDS = 2
 
     binds = ibinds['Point']
 
@@ -45,18 +46,14 @@ class Point(Obj):
             idn, **Point.colorkwargs(widget, color))
 
     @staticmethod
-    def coords(widget, idn, info):
+    def coords(widget, idn):
         l, t, r, b = widget.coords(idn)
         return (l+r)//2, (t+b)//2
 
     @staticmethod
-    def fromdict(widget, coords, color):
+    def restore(widget, coords, color):
         x, y = coords
         return Point(widget, x, y, color)
-
-    @staticmethod
-    def interpolate(dct1, dct2, info1, info2, frac):
-        return Obj.interp(frac, dct1['data'], dct2['data'])
 
     @staticmethod
     def activate(widget, ids):

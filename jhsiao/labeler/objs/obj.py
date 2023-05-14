@@ -193,7 +193,7 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def from_coords(widget, coords, info):
+    def from_coords(coords, info):
         """Convert coords format into some other format.
 
         info: the class dict INFO.
@@ -202,7 +202,7 @@ class Obj(object):
         return coords
 
     @staticmethod
-    def to_coords(widget, coords, info):
+    def to_coords(coords, info):
         """Convert other format to coords format.
 
         info: the class dict INFO.
@@ -221,17 +221,17 @@ class Obj(object):
         cls, idn = Obj.parsetag(Obj.toptag(widget, idn))
         cls = Obj.classes[cls]
         return dict(
-            data=cls.from_coords(widget, cls.coords(widget, idn), info),
+            data=cls.from_coords(cls.coords(widget, idn), info),
             color=cls.color(widget, idn))
 
     @classmethod
-    def parse_dict(cls, widget, dct, info):
+    def parse_dict(cls, dct, info):
         """Parse a dict to retrieve coords and color."""
-        return cls.to_coord(widget, dct['data'], info), dct['color']
+        return cls.to_coords(dct['data'], info), dct['color']
 
     @staticmethod
-    def from_dict(widget, coords, color):
-        """Restore from a dict.
+    def restore(widget, coords, color):
+        """Restore from coords and color.
 
         dct: result from `todict()`
         info: the class info.
@@ -239,15 +239,14 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def interpolate(dct1, dct2, info, frac):
+    def interpolate(coords1, coords2, frac):
         """Interpolate between dct1 and dct2 by frac.
 
-        dct1, dct2: dicts from todict()
-        info: class info
-        frac is the weight of dct1.
+        coords1, coords2:
+            canonical coords to interpolate/extrapolate between
+        frac is the weight of coords1.
         """
-
-        return [(d1-d2)*w + d2 for d1, d2 in zip(data1, data2)]
+        return [(c1-c2)*w + c2 for c1, c2 in zip(coords1, coords2)]
 
     @staticmethod
     def activate(widget, ids):

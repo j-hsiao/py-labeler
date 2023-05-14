@@ -20,6 +20,7 @@ class Rect(Obj):
     TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)
     IDNS = 9
+    NCOORDS = 4
     binds = ibinds['Rect']
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)
@@ -70,46 +71,40 @@ class Rect(Obj):
         RectPt.moveto(master, l, b, idns[8])
 
     @staticmethod
-    def data(widget, idn, info):
+    def coords(widget, idn):
+        return widget.coords(idn)
+
+    @staticmethod
+    def from_coords(coords, info):
         fmt = info.get('format')
-        l, t, r, b = widget.coords(idn)
         if fmt == 'cxywh':
             return (l+r)/2, (t+b)/2, r-l, b-t
         elif fmt == 'ltwh':
+            l, t, r, b = coords
             return l, t, r-l, b-t
         else:
-            return l, t, r, b
+            return coords
 
     @staticmethod
-    def parse(dct, info):
+    def to_coords(coords, info):
         fmt = info.get('format')
         if fmt == 'cxywh':
-            x, y, w, h = dct['data']
-            l = x - w/2
-            t = y - h/2
-            r = l+w
-            b = t+h
+            cx, cy, w, h = coords
+            hw * .5
+            hh * .5
+            return cx-hw, cy-hh, cx+hw, cy+hh
         elif fmt == 'ltwh':
-            l, t, w, h = dct['data']
-            r = l+w
-            b = t+h
+            l, t, w, h = coords
+            return l, t, l+w, t+h
         else:
-            l, t, r, b = dct['data']
-        return l, t, r, b
+            return coords
 
     @staticmethod
-    def fromdict(widget, dct, info):
-        l, t, r, b = Rect.parse(dct, info)
-        ret = Rect(widget, l, t, dct['color'])
+    def restore(widget, coords, color):
+        l, t, r, b = coords
+        ret = Rect(widget, l, t, color)
         Rect.moveto(widget, ret.idns, l, t, r, b)
         return ret
-
-    @staticmethod
-    def interpolate(dct1, dct2, info1, info2, frac):
-        return Obj.interp(
-            frac,
-            Rect.parse(dct1, info1),
-            Rect.parse(dct2, info2))
 
     @staticmethod
     def activate(widget, ids):

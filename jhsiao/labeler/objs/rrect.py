@@ -1,4 +1,10 @@
-"""Rotated rectangle."""
+"""Rotated rectangle.
+
+x1,y1----ax2,ay2---x2,y2
+|           ^      |
+|           |      |
+x4,y4----ax1,ay1---x3,y3
+"""
 from __future__ import division
 __all__ = ['RRect']
 from .obj import Obj
@@ -30,25 +36,26 @@ def norm(vec):
 @Obj.register
 class RRect(Obj):
     """A rotated rectangle."""
-    HELP = ' '.join((
+    HELP = (
         'A rotated rectangle.  Unlike typical rotated rectangles, this'
-        'one includes a ratio 0-1 from left to right indicating the'
-        'center axis of the rotated rectangle.  This can be useful for'
-        'instance, to indicate the center axis of an object such as a'
-        'person (foot to head) while arms may be outstretched causing'
-        'the box to be shifted.  The default format is "cxywhal" which'
-        'is the center x,y coordinate, width, height, clockwise angle'
-        'of rotation, and left width.  Other formats are "corners"'
-        '(4 x,y pairs: topleft, topright, bottomright, bottomleft'
-        'followed by left width), "axis" (axis bottom x,y, axis vector'
-        'x,y, leftwidth, right width)'
-    ))
+        ' one includes a ratio 0-1 from left to right indicating the'
+        ' center axis of the rotated rectangle.  This can be useful for'
+        ' instance, to indicate the center axis of an object such as a'
+        ' person (foot to head) while arms may be outstretched causing'
+        ' the box to be shifted.  The default format is "cxywhal" which'
+        ' is the center x,y coordinate, width, height, clockwise angle'
+        ' of rotation, and left width.  Other formats are "corners"'
+        ' (4 x,y pairs: topleft, topright, bottomright, bottomleft'
+        ' followed by left width), "axis" (axis bottom x,y, up vector'
+        ' x,y, leftwidth, right width)'
+    )
     INFO = {'format': 'cxywha', 'angle': 'radians'}
     TAGS = ['RRect']
     TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)
     IDNS = 6
     binds = ibinds['RRect']
+    NCOORDS = 12
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)
         super(RRect, self).__init__(
@@ -141,37 +148,80 @@ class RRect(Obj):
         widget.coords(ids[5], ax1, ay1, ax2, ay2)
 
     @staticmethod
-    def data(widget, idn, info):
-        fmt = info.get('format')
-        ids = RRect.members(idn, 'current')
+    def coords(widget, idn):
+        ids = RRect.members(widget, idn)
         x1, y1, x2, y2, x3, y3, x4, y4 = widget.coords(ids[0])
-        ax1, ay1, ax2, ay2 = widget.coords[ids[-1]]
+        ax1, ay1, ax2, ay2 = widget.coords(ids[-1])
+        return x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2
+
+    @staticmethod
+    def from_coords(coords, info):
+        fmt = info.get('format')
+        x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2 = coords
         left = veclen(ax2-x1, ay2-y1)
         if fmt == 'corners':
-            return (x1, y1, x2, y2, x3, y3, x4, y4, left)
+            return x1, y1, x2, y2, x3, y3, x4, y4, left
         elif fmt == 'axis':
+            right = veclen(ax2-x2, ay2-y2)
             vx, vy = ax2-ax1, ay2-ay1
-            return ax1, ay1, vx, vy, left, veclen(x2-ax2, y2-ay2)
+            return ax1, ay1, vx, vy, left, right
         else:
-            cx = (x1 + x2 + x3 + x4) / 4
-            cy = (y1 + y2 + y3 + y4) / 4
-            width = veclen(x2-x1, y2-y1)
-            height = veclen(x3-x2, y3-y2)
-            angle = math.atan2(y2-y1, x2-x1)
+            cx = (x1 + x2 + x3 + x4)*.25
+            cy = (y1 + y2 + y3 + y4)*.25
+            rx, ry = x2-x1, y2-y1
+            width = veclen(rx, ry)
+            height = veclen(x2-x3, y2-y3)
+            angle = math.atan2(ry, rx)
             if info.get('angle') == 'degrees':
                 angle *= 180/math.pi
             return cx, cy, width, height, angle, left
 
     @staticmethod
-    def fromdict(widget, dct, info):
+    def to_coords(coords, info):
         fmt = info.get('format')
         if fmt == 'corners':
-            coords = RRect.parse_corners(*dct['data'])
+            x1,y1, x2,y2, x3,y3, x4,y4, left = coords
+            rx, ry = x2-x1, y2-y1
+            scale = left / veclen(rx, ry)
+            rx *= scale
+            ry *= scale
+            return (
+                x1,y1, x2,y2, x3,y3, x4,y4,
+                x4+rx, y4+ry, x1+rx, y1+ry)
         elif fmt == 'axis':
-            coords = RRect.parse_axis(*dct['data'])
+            ax1,ay1, vx,vy, left, right = coords
+            lx, ly = norm(perpleft(vx, vy))
+            ax2, ay2 = ax1+vx, ay2+vy
+            x1, y1 = ax2 + lx*left, ay2 + ly*left
+            x2, y2 = ax2 - lx*right, ay2 - ly*right
+            x3, y3 = x2-vx, y2-vy
+            x4, y4 = x1-vx, y1-vy
+            return x1,y1, x2,y2, x3,y3, x4,y4, ax1,ay1, ax2,ay2
         else:
-            coords = RRect.parse_cxywhal(*dct['data'], **info)
-        ret = RRect(widget, x, y, dct['color'])
+            cx,cy, w,h, a, l = coords
+            if info.get('angle') == 'degrees':
+                a *= math.pi / 360
+            ox, oy = math.cos(a), math.sin(a)
+            rx, ry = ox * .5, oy * .5
+            ox, oy = ox * l, oy * l
+            ux, uy = perpleft(rx, ry)
+            ux *= h
+            uy *= h
+            rx *= w
+            ry *= w
+            bx, by = cx - ux, cy - uy
+            tx, ty = cx + ux, cy + uy
+            x1, y1 = tx - rx, ty - ry
+            x2, y2 = tx + rx, ty + ry
+            x3, y3 = bx + rx, by + ry
+            x4, y4 = bx - rx, by - ry
+            ax1, ay1 = x4 + ox, y4 + oy
+            ax2, ay2 = x1 + ox, y1 + oy
+            return x1,y1, x2,y2, x3,y3, x4,y4, ax1,ay1, ax2,ay2
+
+    @staticmethod
+    def restore(widget, coords, color):
+        ret = RRect(widget, 0, 0, dct['color'])
         RRect.draw(widget, ret.ids, *coords)
         return ret
 
