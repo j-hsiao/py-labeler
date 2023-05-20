@@ -85,6 +85,7 @@ class ObjSelector(tk.Frame, object):
             self.clst.insert(
                 'end',
                 widget.get(widget.curselection()[0]))
+        self.master.unselect()
 
     @staticmethod
     @bindings['ObjSelector.lst'].bind('<<ListboxSelect>>')
@@ -94,7 +95,7 @@ class ObjSelector(tk.Frame, object):
         curname = self.classname(widget.get(widget.curselection()[0]))
         self._cls = Obj.classes.get(curname)
         color = self.classinfo[curname].get('color')
-        if color is not None:
+        if color is not None and self.master.colormode.get():
             self.master.colorpicker.set_color(color)
 
     @staticmethod

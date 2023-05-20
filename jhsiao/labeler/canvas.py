@@ -161,11 +161,18 @@ class LCanv(tk.Frame, object):
             if self.objid is not None:
                 self.info[self.objid] = self._dict.dict()
             self.objid = idn
-            self._dict.set(self.info.get(self.objid, {}))
+            self._dict.set(self.info.get(idn))
             cls, idn = Obj.parsetag(Obj.toptag(self.canv, idn))
             self.selector.select(cls)
             self.colorpicker.set_color(Obj.color(self.canv, idn))
         self.canv.focus_set()
+
+    def unselect(self):
+        if self.objid is not None:
+            self.info[self.objid] = self._dict.dict()
+            self._dict.set({})
+            self.canv.focus_set()
+            self.objid = None
 
     @staticmethod
     @bindings['LCanv.Colorpicker'].bind('<<ColorSelected>>')
@@ -210,11 +217,7 @@ class LCanv(tk.Frame, object):
     @staticmethod
     @canvbinds.bind('<Escape>')
     def _unselect(widget):
-        self = widget.master
-        if self.objid is not None:
-            self._dict.set({})
-            self.canv.focus_set()
-            self.objid = None
+        widget.master.unselect()
 
     @staticmethod
     @canvbinds.bind('<Return>', '<Tab>', dobreak=True)

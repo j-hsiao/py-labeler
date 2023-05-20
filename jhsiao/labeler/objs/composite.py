@@ -81,17 +81,17 @@ class Composite(Obj):
         for (first, last), c in zip(
                 Composite.pairwise(cls.COORDIDXS), cls.components):
             subs.append(
-                c.restore(coords[first:last], color))
+                c.restore(widget, coords[first:last], color))
         return cls(widget, 0, 0, color, subs)
 
     @classmethod
-    def sepinfo(cls, dct):
+    def sepinfo(cls, info):
         """Separate keys into separate dicts per class."""
         xinfo = {c.__name__: DDict(c.INFO) for c in set(cls.components)}
         for k, v in info.items():
             try:
-                nm, nk = k.split(':', 1)
-            except TypeError:
+                nm, nk = k.split(Obj.SEP, 1)
+            except ValueError:
                 xinfo[k] = v
             else:
                 try:
@@ -137,7 +137,7 @@ def make_composite(components, name=None):
     if not name.startswith(Composite.PREFIX):
         name = Composite.PREFIX + name
     info = {
-        ':'.join((cls.__name__, key)): value
+        Obj.SEP.join((cls.__name__, key)): value
         for cls in components
         for key, value in cls.INFO.items()}
     info['components'] = [c.__name__ for c in components]
