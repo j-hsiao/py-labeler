@@ -243,15 +243,16 @@ class Obj(object):
         return coords
 
     @staticmethod
-    def to_dict(widget, idn, info):
+    def to_dict(widget, idn, info, clsname=None):
         """Convert data to dict.
 
         widget: the canvas widget.
         idn: the top-level idn
         info: class info
         """
-        cls, idn = Obj.parsetag(Obj.toptag(widget, idn))
-        cls = Obj.classes[cls]
+        if clsname is None:
+            clsname, idn = Obj.parsetag(Obj.toptag(widget, idn))
+        cls = Obj.classes[clsname]
         return dict(
             data=cls.from_coords(cls.coords(widget, idn), info),
             color=cls.color(widget, idn))
@@ -265,7 +266,7 @@ class Obj(object):
     def restore(widget, coords, color):
         """Restore from coords and color.
 
-        dct: result from `todict()`
+        dct: result from `to_dict()`
         info: the class info.
         """
         raise NotImplementedError

@@ -81,36 +81,45 @@ class LCanv(tk.Frame, object):
         add_bindtags(self.colorpicker, 'LCanv.Colorpicker')
 
     def info(self):
-        """Get the current info."""
+        """Get the current info.
+
+        {
+            clsname: {
+                'info': classinfodict,
+                'data': [
+                    (objectdict, objinfo),
+                    ...]
+            },
+            ...
+        }
+        """
         canv = self.canv
         selector = self.selector
-        ret = {}
-        classinfo = ret['classinfo'] = {
-            k: copy.deepcopy(dict(v))
+        info = {
+            k: dict(info=copy.deepcopy(dict(v)), data=[])
             for k, v in selector.classinfo.items()}
-        data = data['data'] = {}
-        for cls, idn in Obj.topitems(canv):
-            try:
-                lst = data[cls]
-            except KeyError:
-                lst = data[cls] = []
-            lst.append(
-                Obj.classes[cls].todict(canv, idn, classinfo[cls]))
+        for clsname, idn in Obj.topitems(canv):
+            dct = info[clsname]
+            dct['data'].append((
+                Obj.to_dict(canv, idn, dct['info'], clsname), self.info[idn]))
         return ret
 
     def restore(self, info):
-        data = info['data']
-        for cls, cinfo in info['classinfo'].items():
+        """Restore Objs from info."""
+        for cls, cinfo in info.items():
+            classinfo = cinfo['info']
+            data = cinfo['data']
             try:
                 c = Obj.classes[cls]
             except KeyError:
                 if cls.startswith('Composite'):
-                    make_composite(cinfo['components'], cls[len('Composite'):])
+                    make_composite(classinfo['components'], cls[len('Composite'):])
                     self.selector.reload()
                 else:
                     raise
-            for d in data[cls]:
-                c.fromdict(self,canv, d)
+            self.selector.classinfo[cls].update(info)
+            for odata, oinfo in cinfo['data']:
+                Obj.restore(self.canv, odata['data'], odata['color'])
 
     def xview(self, *args):
         ret = self.canv.xview(*args)
