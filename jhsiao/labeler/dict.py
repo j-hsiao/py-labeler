@@ -178,6 +178,9 @@ class Dict(tk.Frame):
         self.scroll.grid(row=0, column=2, sticky='ns', rowspan=2)
         self.addbutton.grid(row=2, column=0, sticky='ew', columnspan=2)
 
+    def focus_entry(self):
+        self.dframe.grid_slaves(row=0, column=0)[0].key.focus_set()
+
     def dict(self):
         ret = {}
         for item in self.dframe.children.values():
@@ -188,6 +191,8 @@ class Dict(tk.Frame):
 
     def set(self, dct):
         """Set the DictItem entries to the values of the `dct`."""
+        if dct is None:
+            dct = {}
         nitems = len(dct)
         cur = self.dframe.grid_size()[1]
         if nitems > cur:

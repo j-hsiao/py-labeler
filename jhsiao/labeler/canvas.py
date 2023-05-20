@@ -80,7 +80,16 @@ class LCanv(tk.Frame, object):
 
         add_bindtags(self.colorpicker, 'LCanv.Colorpicker')
 
-    def info(self):
+    def created_color(self):
+        color = self.colorpicker.color()
+        if self.colormode.get():
+            cls = self.selector()
+            ccolor = self.selector.classinfo[cls.__name__].get('color')
+            if ccolor is not None:
+                return ccolor
+        return color
+
+    def data(self):
         """Get the current info.
 
         {
@@ -101,25 +110,37 @@ class LCanv(tk.Frame, object):
         for clsname, idn in Obj.topitems(canv):
             dct = info[clsname]
             dct['data'].append((
-                Obj.to_dict(canv, idn, dct['info'], clsname), self.info[idn]))
-        return ret
+                Obj.to_dict(canv, idn, dct['info'], clsname), self.info.get(idn)))
+        return info
+
+    def clear(self):
+        self._unselect(self.canv)
+        self.info.clear()
+        for topid in Obj.tops(self.canv):
+            self.canv.delete(Obj.toptag(self.canv, topid))
 
     def restore(self, info):
         """Restore Objs from info."""
+        self.clear()
+        canv = self.canv
         for cls, cinfo in info.items():
             classinfo = cinfo['info']
-            data = cinfo['data']
+            objdata = cinfo['data']
             try:
                 c = Obj.classes[cls]
             except KeyError:
                 if cls.startswith('Composite'):
                     make_composite(classinfo['components'], cls[len('Composite'):])
                     self.selector.reload()
+                    self.selector.select(cls)
+                    c = self.selector()
                 else:
                     raise
-            self.selector.classinfo[cls].update(info)
-            for odata, oinfo in cinfo['data']:
-                Obj.restore(self.canv, odata['data'], odata['color'])
+            self.selector.classinfo[cls].update(classinfo)
+            for odata, oinfo in objdata:
+                obj = c.restore(
+                    canv, *c.parse_dict(odata, classinfo)).marktop(canv)
+                self.info[obj.ids[0]] = oinfo
 
     def xview(self, *args):
         ret = self.canv.xview(*args)
@@ -141,10 +162,10 @@ class LCanv(tk.Frame, object):
                 self.info[self.objid] = self._dict.dict()
             self.objid = idn
             self._dict.set(self.info.get(self.objid, {}))
-            self.canv.focus_set()
-            self.colorpicker.set_color(Obj.color(self.canv, idn))
             cls, idn = Obj.parsetag(Obj.toptag(self.canv, idn))
             self.selector.select(cls)
+            self.colorpicker.set_color(Obj.color(self.canv, idn))
+        self.canv.focus_set()
 
     @staticmethod
     @bindings['LCanv.Colorpicker'].bind('<<ColorSelected>>')
@@ -196,6 +217,13 @@ class LCanv(tk.Frame, object):
             self.objid = None
 
     @staticmethod
+    @canvbinds.bind('<Return>', '<Tab>', dobreak=True)
+    def _move_to_info(widget):
+        widget.master._dict.focus_entry()
+        return 'break'
+
+
+    @staticmethod
     @canvbinds.bind('<h>', '<H>')
     def _toggle_crosshairs(widget):
         if widget.itemcget('Crosshairs', 'state') == 'hidden':
@@ -218,7 +246,7 @@ class LCanv(tk.Frame, object):
         cls = self.selector()
         name = cls.__name__
         if self.colormode.get():
-            classinfo = self.selector.classinfo[self.selector().__name__].get(
+            color = self.selector.classinfo[self.selector().__name__].get(
                 'color', 'black')
         else:
             color = self.colorpicker.color()

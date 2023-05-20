@@ -221,7 +221,7 @@ class RRect(Obj):
 
     @staticmethod
     def restore(widget, coords, color):
-        ret = RRect(widget, 0, 0, dct['color'])
+        ret = RRect(widget, 0, 0, color)
         RRect.draw(widget, ret.ids, *coords)
         return ret
 

@@ -99,6 +99,7 @@ class Obj(object):
     def marktop(self, master):
         """Mark this Obj as a top-level object."""
         master.addtag(Obj.TOP, 'withtag', self.ids[0])
+        return self
 
     @staticmethod
     def tops(master):
@@ -260,7 +261,12 @@ class Obj(object):
     @classmethod
     def parse_dict(cls, dct, info):
         """Parse a dict to retrieve coords and color."""
-        return cls.to_coords(dct['data'], info), dct['color']
+        color = dct.get('color')
+        if color is None:
+            color = info.get('color')
+            if color is None:
+                color = 'black'
+        return cls.to_coords(dct['data'], info), color
 
     @staticmethod
     def restore(widget, coords, color):

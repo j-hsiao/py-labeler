@@ -103,7 +103,7 @@ class Rect(Obj):
     def restore(widget, coords, color):
         l, t, r, b = coords
         ret = Rect(widget, l, t, color)
-        Rect.moveto(widget, ret.idns, l, t, r, b)
+        Rect.moveto(widget, ret.ids, l, t, r, b)
         return ret
 
     @staticmethod

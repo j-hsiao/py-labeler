@@ -93,6 +93,9 @@ class ObjSelector(tk.Frame, object):
         self = widget.master
         curname = self.classname(widget.get(widget.curselection()[0]))
         self._cls = Obj.classes.get(curname)
+        color = self.classinfo[curname].get('color')
+        if color is not None:
+            self.master.colorpicker.set_color(color)
 
     @staticmethod
     @bindings['ObjSelector.lst'].bind('<Double-ButtonRelease-1>')
