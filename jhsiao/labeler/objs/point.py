@@ -73,7 +73,7 @@ class Point(Obj):
     def snapto(widget, x, y, idn='current'):
         """Snap mouse to center of point."""
         Obj.snapto(
-            widget, x, y, Point.coords(widget, idn, None))
+            widget, x, y, Point.coords(widget, idn))
 
     @staticmethod
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')

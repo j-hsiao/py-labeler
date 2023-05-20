@@ -60,6 +60,22 @@ class ObjSelector(tk.Frame, object):
         """Retrieve the currently selected class."""
         return self._cls
 
+    def select(self, cls_or_name):
+        if not isinstance(cls_or_name, str):
+            cls_or_name = cls_or_name.__name__
+        try:
+            idx = self.lst.get(0, 'end').index(self.displayname(cls_or_name))
+        except ValueError:
+            pass
+        else:
+            try:
+                self._cls = Obj.classes[cls_or_name]
+            except KeyError:
+                pass
+            else:
+                self.lst.selection_clear(0, 'end')
+                self.lst.selection_set(idx)
+
     @staticmethod
     @bindings['ObjSelector.lst'].bind('<ButtonRelease-1>')
     def _add_component(widget):

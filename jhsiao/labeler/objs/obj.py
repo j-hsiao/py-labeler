@@ -35,6 +35,34 @@ class Obj(object):
     received from a callback.  Canvas coordinates convert the window
     coordinates into coordinates in the canvas and differ when the
     tk.Canvas is not scrolled to the top left.
+
+    Subclasses should implement the following functions.  Unless
+    otherwise noted, the default impl just finds the top-level Obj
+    type and calls that class' corresponding method (if idn is an arg).
+        color(widget, idn):
+            return the color of obj
+        recolor(widget, color, idn):
+            change color of obj
+        coords(widget, idn):
+            get the coordinates (canonical)
+        from_coords(coords, info):
+            Convert canonical coords to alternative format.
+            Default impl is do nothing, return as is.
+        to_coords(coords, info):
+            Convert alternative coords to canonical
+            Default impl is do nothing, return as is.
+        to_dict(widget, idn, info):
+            Convert obj to a dict.  Default impl is to use
+            dict(data=`coords(...)`, color=`color(...)`)
+        parse_dict(dct, info):
+            Parse dict into coordinates and color
+        restore(widget, coords, color):
+            Create the obj from coords and color.  Default is
+            not implemented.
+        activate(widget, ids):
+            Activated state (selected), default is do nothing.
+        deactivate(widget, ids):
+            deactivate state (selected), default is do nothing.
     """
     INFO = {}
     TOP = 'top'
@@ -84,10 +112,6 @@ class Obj(object):
         return cls, int(idn)
 
     @staticmethod
-    def parseid(tag):
-        return int(tag.rsplit(Obj.SEP, 1)[-1])
-
-    @staticmethod
     def toptag(master, idn):
         """Get the toplevel Obj's idtag."""
         tags = master.gettags(idn)
@@ -99,21 +123,11 @@ class Obj(object):
         return tag
 
     @staticmethod
-    def topid(master, idn):
-        """Get the toplevel Obj's item id."""
-        return int(Obj.toptag(master, idn).rsplit(Obj.SEP, 1)[-1])
-
-    @staticmethod
     def topitems(master):
         """Return tuples of (classname, itemid) for top-level Objs."""
         return [
             Obj.parsetag(Obj.toptag(master, idn))
             for idn in master.find('withtag', Obj.TOP)]
-
-    @classmethod
-    def idtag(cls, master, idn):
-        """Extract the class id tag."""
-        return master.gettags(idn)[cls.IDX]
 
     @staticmethod
     def make_idtag(maintag):
@@ -125,7 +139,6 @@ class Obj(object):
         if idx is None:
             idx = cls.IDX
         return widget.find('withtag', widget.gettags(idn)[idx])
-
 
     @staticmethod
     def addtags(master, ids, tags):
@@ -172,16 +185,35 @@ class Obj(object):
         return '#{:02x}{:02x}{:02x}'.format(
             *[((x//256)+128)%256 for x in master.winfo_rgb(color)])
 
+    @staticmethod
+    def topcall(widget, name, idn, **kwargs):
+        """Call the named method with args on the top class."""
+        cls, idn = Obj.parsetag(Obj.toptag(widget, idn))
+        return getattr(Obj.classes[cls], name)(
+            widget, idn=idn, **kwargs)
+
+    @staticmethod
+    def interpolate(coords1, coords2, frac):
+        """Interpolate between dct1 and dct2 by frac.
+
+        coords1, coords2:
+            canonical coords to interpolate/extrapolate between
+        frac is the weight of coords1.
+        """
+        return [(c1-c2)*w + c2 for c1, c2 in zip(coords1, coords2)]
+
+    #------------------------------
     # General Obj interface
+    #------------------------------
     @staticmethod
     def color(widget, idn):
         """Get the color for this Obj."""
-        raise NotImplementedError
+        return Obj.topcall(widget, 'color', idn)
 
     @staticmethod
     def recolor(widget, color, idn):
         """Change color of the Obj."""
-        raise NotImplementedError
+        return Obj.topcall(widget, 'recolor', idn, color=color)
 
     @staticmethod
     def coords(widget, idn):
@@ -190,7 +222,7 @@ class Obj(object):
         Canonical coordinates means x,y points.  This format is most
         easily used in the Canvas and for interpolation.
         """
-        raise NotImplementedError
+        return Obj.topcall(widget, 'coords', idn)
 
     @staticmethod
     def from_coords(coords, info):
@@ -239,30 +271,22 @@ class Obj(object):
         raise NotImplementedError
 
     @staticmethod
-    def interpolate(coords1, coords2, frac):
-        """Interpolate between dct1 and dct2 by frac.
-
-        coords1, coords2:
-            canonical coords to interpolate/extrapolate between
-        frac is the weight of coords1.
-        """
-        return [(c1-c2)*w + c2 for c1, c2 in zip(coords1, coords2)]
-
-    @staticmethod
     def activate(widget, ids):
         """Mark the Obj as active.
 
         This is generally called in the case when Obj is actually a
         sub Obj to indicate that it belongs to the toplevel Obj.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
     def deactivate(widget, ids):
         """Opposite of activate."""
-        raise NotImplemented
+        pass
 
+    #------------------------------
     # General Obj behavior
+    #------------------------------
     @staticmethod
     @binds.bind('<Button-1>')
     def _onclick(widget):
@@ -315,5 +339,3 @@ class Obj(object):
             return
         else:
             raise Exception('Failed to find topbase tag.')
-
-

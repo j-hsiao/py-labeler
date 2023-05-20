@@ -11,7 +11,7 @@ def test_lcanv():
     r.grid_columnconfigure(0, weight=1)
     lc = LCanv(r, border=0, highlightthickness=0)
     lc.grid(sticky='nsew')
-    r.bind('<Escape>', r.register(r.destroy))
+    r.bind('<Shift-Escape>', r.register(r.destroy))
 
     im = os.environ.get('IM')
     if im:

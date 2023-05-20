@@ -65,7 +65,8 @@ class BGImage(object):
     def _create(widget, x, y):
         cx, cy = Obj.canvxy(widget, x, y)
         lcanv = widget.master
-        lcanv.selector()(widget, cx, cy, lcanv.colorpicker.color())
+        lcanv.selector()(
+            widget, cx, cy, lcanv.colorpicker.color()).marktop(widget)
         widget.event_generate('<ButtonRelease-1>', x=x, y=y, when='tail')
         widget.event_generate('<Button-1>', x=x, y=y, when='tail')
 

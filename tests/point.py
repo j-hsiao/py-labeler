@@ -30,16 +30,8 @@ def test_point():
 
     def getitems(e):
         print(point.Point.tops(e.widget))
-        tops = set([
-            point.Point.topid(e.widget, idn)
-            for idn in e.widget.find('withtag', 'Obj')
-        ])
-        print(tops)
-        for idn in tops:
-            cls, oidn = point.Point.parsetag(
-                point.Point.toptag(e.widget, idn))
-            print(cls, idn==oidn)
-            print(idn, e.widget.gettags(idn))
+        for item in Obj.topitems(e.widget):
+            print(item)
 
     c.bind('<Button-1>', check_cur)
     c.bind('<Button-3>', getitems)

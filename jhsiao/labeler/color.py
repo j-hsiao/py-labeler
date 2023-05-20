@@ -513,13 +513,15 @@ class ColorPicker(tk.Label, object):
         window.wait_window()
         result = getattr(window, 'result', None)
         if result:
-            widget.configure(background=result)
-            r, g, b = parse_color(widget, result)
-            widget.configure(
-                foreground=format_color(
-                    (r+127)%256, (g+127)%256, (b+127)%256))
-
+            widget.set_color(result)
             widget.event_generate('<<ColorSelected>>')
+
+    def set_color(self, color):
+        self.configure(background=color)
+        r, g, b = parse_color(self, color)
+        self.configure(
+            foreground=format_color(
+                (r+127)%256, (g+127)%256, (b+127)%256))
 
     def color(self):
         return self.cget('background')

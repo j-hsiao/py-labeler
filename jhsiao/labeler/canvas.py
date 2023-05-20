@@ -40,7 +40,11 @@ class LCanv(tk.Frame, object):
         self.bgim = BGImage(self.canv)
         self.xhairs = Crosshairs(self.canv)
         self.selector = ObjSelector(self, border=2, relief='sunken')
-        self.colorpicker = ColorPicker(self, border=2, relief='raised')
+        self.colorframe = tk.Frame(self, border=2, relief='raised')
+        self.colorpicker = ColorPicker(self)
+        self.colormode = tk.BooleanVar(self, value=True)
+        self.colorcheck = tk.Checkbutton(self.colorframe, text='class colors mode', variable=self.colormode)
+
         self.infoframe = tk.Frame(self, border=2, relief='sunken')
         self._dict = Dict(self.infoframe)
         self.iteminfolabel = tk.Label(self.infoframe, text='Object info')
@@ -48,8 +52,14 @@ class LCanv(tk.Frame, object):
 
         self.selector.grid(row=0, column=1, sticky='nsew')
         self.grid_rowconfigure(0, weight=1)
-        self.colorpicker.grid(row=1, column=1, sticky='nsew')
-        self.grid_rowconfigure(1, minsize=50)
+
+        self.colorframe.grid(row=1, column=1, sticky='nsew')
+        self.colorframe.grid_rowconfigure(0, weight=1, minsize=50)
+        self.colorframe.grid_columnconfigure(0, weight=1)
+        self.colorpicker.grid(row=0, column=0, sticky='nsew', in_=self.colorframe, columnspan=2)
+        self.colorcheck.grid(row=1, column=0, sticky='nsew')
+
+        self.grid_rowconfigure(1, minsize=70)
         self.infoframe.grid(row=2, column=1, sticky='nsew')
         self.grid_rowconfigure(2, weight=1)
         self.infoframe.grid_rowconfigure(1, weight=1)
@@ -68,6 +78,8 @@ class LCanv(tk.Frame, object):
         self.grid_columnconfigure(0, weight=1)
         bindings.apply(self.canv, methods=['tag_bind'], create=False)
 
+        add_bindtags(self.colorpicker, 'LCanv.Colorpicker')
+
     def info(self):
         """Get the current info."""
         canv = self.canv
@@ -77,10 +89,7 @@ class LCanv(tk.Frame, object):
             k: copy.deepcopy(dict(v))
             for k, v in selector.classinfo.items()}
         data = data['data'] = {}
-        for idn in Obj.tops(canv):
-            cls, idn2 = Obj.parsetag(Obj.toptag(canv, idn))
-            if idn != idn2:
-                print('Warning, object ids do not match')
+        for cls, idn in Obj.topitems(canv):
             try:
                 lst = data[cls]
             except KeyError:
@@ -124,6 +133,32 @@ class LCanv(tk.Frame, object):
             self.objid = idn
             self._dict.set(self.info.get(self.objid, {}))
             self.canv.focus_set()
+            self.colorpicker.set_color(Obj.color(self.canv, idn))
+            cls, idn = Obj.parsetag(Obj.toptag(self.canv, idn))
+            self.selector.select(cls)
+
+    @staticmethod
+    @bindings['LCanv.Colorpicker'].bind('<<ColorSelected>>')
+    def _colorpicked(widget):
+        """Select a color.
+
+        If there is an active item, recolor it.  Otherwise, recolor
+        all items of the selected class.
+        """
+        self = widget.master
+        canv = self.canv
+        color = self.colorpicker.color()
+        if self.colormode.get():
+            cls = self.selector()
+            self.selector.classinfo[cls.__name__]['color'] = color
+            for clsname, idn in Obj.topitems(canv):
+                if clsname == cls.__name__:
+                    cls.recolor(canv, color, idn)
+        else:
+            if self.objid is not None:
+                clsname, idn = Obj.parsetag(Obj.toptag(canv, self.objid))
+                Obj.classes[clsname].recolor(
+                    canv, color, self.objid)
 
     canvbinds.bind('<B1-Leave>', '<B1-Enter>')(' ')
 
@@ -138,10 +173,17 @@ class LCanv(tk.Frame, object):
     def _remove(widget):
         self = widget.master
         if self.objid is not None:
-            self._dict.set({})
-            self.canv.focus_set()
             self.info.pop(self.objid, None)
             widget.delete(Obj.toptag(widget, self.objid))
+            LCanv._unselect(widget)
+
+    @staticmethod
+    @canvbinds.bind('<Escape>')
+    def _unselect(widget):
+        self = widget.master
+        if self.objid is not None:
+            self._dict.set({})
+            self.canv.focus_set()
             self.objid = None
 
     @staticmethod
@@ -162,11 +204,18 @@ class LCanv(tk.Frame, object):
     @staticmethod
     @canvbinds.bind('<C>', '<c>')
     def _recolor_obj(widget):
+        """Recolor the class."""
         self = widget.master
-        if self.objid is not None:
-            clsname, idn = Obj.parsetag(Obj.toptag(widget, self.objid))
-            Obj.classes[clsname].recolor(
-                widget, self.colorpicker.color(), self.objid)
+        cls = self.selector()
+        name = cls.__name__
+        if self.colormode.get():
+            classinfo = self.selector.classinfo[self.selector().__name__].get(
+                'color', 'black')
+        else:
+            color = self.colorpicker.color()
+        for clsname, idn in Obj.topitems(widget):
+            if clsname == name:
+                cls.recolor(widget, color, idn)
 
     @staticmethod
     @canvbinds.bind('<W>', '<w>', '<A>', '<a>', '<S>', '<s>', '<D>', '<d>')
