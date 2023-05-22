@@ -15,7 +15,7 @@ class Rect(Obj):
         'coordinates and width, height', '"ltwh" which is top left x,y'
         'followed by width and height.'
     ))
-    INFO = {'format': 'ltrb'}
+    INFO = dict(format='ltrb', color='blue')
     TAGS = ['Rect']
     TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)

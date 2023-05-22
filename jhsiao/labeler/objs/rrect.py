@@ -49,7 +49,7 @@ class RRect(Obj):
         ' followed by left width), "axis" (axis bottom x,y, up vector'
         ' x,y, leftwidth, right width)'
     )
-    INFO = {'format': 'cxywha', 'angle': 'radians'}
+    INFO = dict(format='cxywha', angle='radians', color='red')
     TAGS = ['RRect']
     TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)

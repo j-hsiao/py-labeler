@@ -12,6 +12,7 @@ class Point(Obj):
     IDX = Obj.IDX  + len(TAGS)
     IDNS = 1
     NCOORDS = 2
+    INFO = dict(color='black')
 
     binds = ibinds['Point']
 

@@ -254,9 +254,12 @@ class Obj(object):
         if clsname is None:
             clsname, idn = Obj.parsetag(Obj.toptag(widget, idn))
         cls = Obj.classes[clsname]
-        return dict(
-            data=cls.from_coords(cls.coords(widget, idn), info),
-            color=cls.color(widget, idn))
+        data = cls.from_coords(cls.coords(widget, idn), info)
+        color = cls.color(widget, idn)
+        if widget.winfo_rgb(color) != widget.winfo_rgb(info.get('color')):
+            return dict(data=data, color=color)
+        else:
+            return dict(data=data)
 
     @classmethod
     def parse_dict(cls, dct, info):
