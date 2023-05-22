@@ -39,11 +39,11 @@ class LCanv(tk.Frame, object):
         add_bindtags(self.canv, 'LCanv.canv')
         self.bgim = BGImage(self.canv)
         self.xhairs = Crosshairs(self.canv)
-        self.selector = ObjSelector(self, border=2, relief='sunken')
         self.colorframe = tk.Frame(self, border=2, relief='raised')
         self.colorpicker = ColorPicker(self)
         self.colormode = tk.BooleanVar(self, value=True)
         self.colorcheck = tk.Checkbutton(self.colorframe, text='class colors mode', variable=self.colormode)
+        self.selector = ObjSelector(self, border=2, relief='sunken')
 
         self.infoframe = tk.Frame(self, border=2, relief='sunken')
         self._dict = Dict(self.infoframe)
@@ -96,12 +96,14 @@ class LCanv(tk.Frame, object):
             clsname: {
                 'info': classinfodict,
                 'data': [
-                    (objectdict, objinfo),
+                    {data: ..., ?color?: ..., ?info?: {...}},
                     ...]
             },
             ...
         }
         """
+        if self.objid is not None:
+            self.info[self.objid] = self._dict.dict()
         canv = self.canv
         selector = self.selector
         info = {
@@ -109,12 +111,15 @@ class LCanv(tk.Frame, object):
             for k, v in selector.classinfo.items()}
         for clsname, idn in Obj.topitems(canv):
             dct = info[clsname]
-            dct['data'].append((
-                Obj.to_dict(canv, idn, dct['info'], clsname), self.info.get(idn)))
+            odct = Obj.to_dict(canv, idn, dct['info'], clsname)
+            oinfo = self.info.get(idn)
+            if oinfo:
+                odct['info'] = oinfo
+            dct['data'].append(odct)
         return info
 
     def clear(self):
-        self._unselect(self.canv)
+        self.unselect()
         self.info.clear()
         for topid in Obj.tops(self.canv):
             self.canv.delete(Obj.toptag(self.canv, topid))
@@ -125,7 +130,6 @@ class LCanv(tk.Frame, object):
         canv = self.canv
         for cls, cinfo in info.items():
             classinfo = cinfo['info']
-            objdata = cinfo['data']
             try:
                 c = Obj.classes[cls]
             except KeyError:
@@ -137,10 +141,12 @@ class LCanv(tk.Frame, object):
                 else:
                     raise
             self.selector.classinfo[cls].update(classinfo)
-            for odata, oinfo in objdata:
+            clsinfo = self.selector.classinfo[cls]
+            for oinfo in cinfo['data']:
                 obj = c.restore(
-                    canv, *c.parse_dict(odata, classinfo)).marktop(canv)
-                self.info[obj.ids[0]] = oinfo
+                    canv, *c.parse_dict(oinfo, clsinfo)).marktop(canv)
+                self.info[obj.ids[0]] = oinfo.get('info')
+        self.selector.select(self.selector())
 
     def xview(self, *args):
         ret = self.canv.xview(*args)

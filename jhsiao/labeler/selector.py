@@ -75,6 +75,7 @@ class ObjSelector(tk.Frame, object):
             else:
                 self.lst.selection_clear(0, 'end')
                 self.lst.selection_set(idx)
+                self._sel_changed(self.lst)
 
     @staticmethod
     @bindings['ObjSelector.lst'].bind('<ButtonRelease-1>')
