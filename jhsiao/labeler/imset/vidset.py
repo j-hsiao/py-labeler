@@ -1,10 +1,11 @@
 import cv2
+import threading
 
 from . import ImageSet
 
 class VidSet(ImageSet):
     def __init__(self, vidname):
-        self.vidname = vidname
+        super(VidSet, self).__init__(vidname)
         self.cap = cv2.VideoCapture()
         if not self.cap.open(vidname):
             raise ValueError('Bad video: {}'.format(vidname))
