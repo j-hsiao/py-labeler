@@ -1,10 +1,20 @@
 __all__ = ['DirSet']
 import os
 import time
+import re
 
 import cv2
 
 from . import ImageSet
+
+_nsort_pat = re.compile(r'(\d+)')
+def _nsort_key(name):
+    ret = _nsort_pat.split(name)
+    ret[1::2] = [int(_) for _ in ret[1::2]]
+    strparts = ret[::2]
+    ret[::2] = [_.lower() for _ in strparts]
+    ret.extend(strparts)
+    return ret
 
 class DirSet(ImageSet):
     """Images that are in a directory.
@@ -14,12 +24,19 @@ class DirSet(ImageSet):
     def __init__(self, dirname, check=1):
         super(DirSet, self).__init__(dirname)
         self.fnames = os.listdir(self.name)
+        self.fnames.sort(key=_nsort_key)
         self.check = check
         self._check = time.time()
         self._stamp = os.stat(self.name).st_mtime
+        self._get_thread()
+
+    @staticmethod
+    def _load(dname, fname):
+        """Load an image."""
+        return fname, cv2.imread(os.path.join(dname, fname))
 
     def _check_changed(self):
-        """Check if directory changed and load if so."""
+        """Check if directory changed and reload fname list if so."""
         now = time.time()
         if now - self._check < self.check:
             return
@@ -30,6 +47,7 @@ class DirSet(ImageSet):
         self._stamp = mtime
         curname = self.fnames[self.pos]
         self.fnames = os.listdir(self.name)
+        self.fnames.sort(key=_nsort_key)
         try:
             self.pos = self.fnames.index(curname)
         except ValueError:
@@ -38,10 +56,17 @@ class DirSet(ImageSet):
     def __len__(self):
         return len(self.fnames)
 
+    @ImageSet.lencheck
     def __getitem__(self, idx):
-        if idx < 0 or len(self.fnames) <= idx:
-            return None, None
         self.pos = idx
         self._check_changed()
-        fname = self.fnames[self.pos]
-        return fname, cv2.imread(os.path.join(self.name, fname))
+        return self._load(self.name, self.fnames[self.pos])
+
+    @ImageSet.lencheck
+    def __call__(self, idx, callback):
+        fname = self.fnames[idx]
+        self.pos = idx
+        with self.cond:
+            self.q.append((callback, self._load, (self.name, fname), {}))
+            self.cond.notify()
+        return fname
