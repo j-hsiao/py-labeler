@@ -9,9 +9,14 @@ class VidSet(ImageSet):
         if not self.cap.open(vidname):
             raise ValueError('Bad video: {}'.format(vidname))
         self._get_thread()
+        self._length = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    @ImageSet.lencheck
+    def name(self, idx):
+        return str(idx)
 
     def __len__(self):
-        return int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        return self._length
 
     @staticmethod
     def _load(idx, cap):
@@ -20,14 +25,14 @@ class VidSet(ImageSet):
         if nextidx != idx:
             cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
         s, f = cap.read()
-        return str(idx), f
+        return idx, str(idx), f
 
     @ImageSet.lencheck
     def __getitem__(self, idx):
         if idx < 0 or len(self) <= idx:
             raise IndexError(str(idx))
         self.pos = idx
-        return self._load(idx, self.cap)
+        return self._load(idx, self.cap)[1:]
 
     @ImageSet.lencheck
     def __call__(self, idx, callback):

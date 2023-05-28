@@ -44,7 +44,8 @@ class ImageSet(object):
         idx: int, [0, len(self))
             The index of the image to load.  Invalid index raises
             IndexError
-        callback: callable(name, image)
+        callback: callable(idx, name, image)
+            idx: idx given as argument.
             name: str, the name of the image.
             image: numpy array or None if failed.
         This immediately returns the name of the image.
@@ -53,8 +54,12 @@ class ImageSet(object):
         is synchronous.
         """
         fname, im = self[idx]
-        callback(fname, im)
+        callback(idx, fname, im)
         return fname
+
+    def name(self, idx):
+        """Return name at idx."""
+        raise NotImplementedError
 
     @staticmethod
     def open(uri, *args, **kwargs):

@@ -13,7 +13,7 @@ from jhsiao.labeler.imset import ImageSet
 def test_imsets():
     ims = ImageSet.open(os.environ.get('IM', '.'))
     q = queue.Queue()
-    def callback(name, im):
+    def callback(idx, name, im):
         if im is None:
             print('Load failed!', repr(name))
             return
@@ -29,7 +29,7 @@ def test_imsets():
         q.put(scaled)
 
     cv2.namedWindow('im')
-    callback(*ims[0])
+    callback(0, *ims[0])
     k = -1
     while k != ord('q'):
         try:

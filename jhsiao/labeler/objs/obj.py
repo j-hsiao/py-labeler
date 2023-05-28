@@ -271,6 +271,18 @@ class Obj(object):
                 color = 'black'
         return cls.to_coords(dct['data'], info), color
 
+    @classmethod
+    def convert_dict(cls, dct, info, newinfo):
+        """Mutate dict from info to newinfo.
+        """
+        coords, color = cls.parse_dict(dct, info)
+        if color == newinfo.get('color'):
+            dct.pop('color', None)
+        else:
+            dct['color'] = color
+        dct['data'] = cls.from_coords(coords, newinfo)
+        return dct
+
     @staticmethod
     def restore(widget, coords, color):
         """Restore from coords and color.

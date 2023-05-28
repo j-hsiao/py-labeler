@@ -31,9 +31,13 @@ class DirSet(ImageSet):
         self._get_thread()
 
     @staticmethod
-    def _load(dname, fname):
+    def _load(idx, dname, fname):
         """Load an image."""
-        return fname, cv2.imread(os.path.join(dname, fname))
+        return idx, fname, cv2.imread(os.path.join(dname, fname))
+
+    @ImageSet.lencheck
+    def name(self, idx):
+        return self.fnames[idx]
 
     def _check_changed(self):
         """Check if directory changed and reload fname list if so."""
@@ -60,13 +64,13 @@ class DirSet(ImageSet):
     def __getitem__(self, idx):
         self.pos = idx
         self._check_changed()
-        return self._load(self.name, self.fnames[self.pos])
+        return self._load(idx, self.name, self.fnames[self.pos])[1:]
 
     @ImageSet.lencheck
     def __call__(self, idx, callback):
         fname = self.fnames[idx]
         self.pos = idx
         with self.cond:
-            self.q.append((callback, self._load, (self.name, fname), {}))
+            self.q.append((callback, self._load, (idx, self.name, fname), {}))
             self.cond.notify()
         return fname
