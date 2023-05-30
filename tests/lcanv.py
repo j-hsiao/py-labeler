@@ -17,7 +17,12 @@ def test_lcanv():
 
     def check(e):
         print(lc.selector.classinfo)
+        print('modified?', lc.modified())
     r.bind('<question>', check)
+    def reset(e):
+        print('reset')
+        lc._changed = False
+    r.bind('<slash>', reset)
 
     states = []
 

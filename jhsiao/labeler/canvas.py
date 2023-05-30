@@ -102,6 +102,7 @@ class LCanv(tk.Frame, object):
             ...
         }
         """
+        # TODO account for zoom
         if self.objid is not None:
             self.info[self.objid] = self._dict.dict()
         canv = self.canv
@@ -147,6 +148,7 @@ class LCanv(tk.Frame, object):
                     canv, *c.parse_dict(oinfo, clsinfo)).marktop(canv)
                 self.info[obj.ids[0]] = oinfo.get('info')
         self.selector.select(self.selector())
+        self._changed = False
 
     def xview(self, *args):
         ret = self.canv.xview(*args)
@@ -175,10 +177,20 @@ class LCanv(tk.Frame, object):
 
     def unselect(self):
         if self.objid is not None:
-            self.info[self.objid] = self._dict.dict()
+            nsettings = self._dict.dict()
+            if nsettings != self.info.get(self.objid):
+                self._changed = True
+                self.info[self.objid] = nsettings
             self._dict.set({})
             self.canv.focus_set()
             self.objid = None
+
+    def modify(self):
+        """Mark as modified."""
+        self._changed = True
+
+    def modified(self):
+        return self._changed
 
     @staticmethod
     @bindings['LCanv.Colorpicker'].bind('<<ColorSelected>>')
@@ -197,11 +209,13 @@ class LCanv(tk.Frame, object):
             for clsname, idn in Obj.topitems(canv):
                 if clsname == cls.__name__:
                     cls.recolor(canv, color, idn)
+                    self._changed = True
         else:
             if self.objid is not None:
                 clsname, idn = Obj.parsetag(Obj.toptag(canv, self.objid))
                 Obj.classes[clsname].recolor(
                     canv, color, self.objid)
+                self._changed = True
 
     canvbinds.bind('<B1-Leave>', '<B1-Enter>')(' ')
 
@@ -218,7 +232,10 @@ class LCanv(tk.Frame, object):
         if self.objid is not None:
             self.info.pop(self.objid, None)
             widget.delete(Obj.toptag(widget, self.objid))
-            LCanv._unselect(widget)
+            self._dict.set({})
+            self.canv.focus_set()
+            self.objid = None
+            self._changed = True
 
     @staticmethod
     @canvbinds.bind('<Escape>')
@@ -247,6 +264,7 @@ class LCanv(tk.Frame, object):
         if self.objid is not None:
             widget.tag_lower(Obj.toptag(widget, self.objid), 'Obj')
 
+    # TODO: is this actually necessary?
     @staticmethod
     @canvbinds.bind('<C>', '<c>')
     def _recolor_obj(widget):
@@ -262,10 +280,11 @@ class LCanv(tk.Frame, object):
         for clsname, idn in Obj.topitems(widget):
             if clsname == name:
                 cls.recolor(widget, color, idn)
+                self._changed = True
 
     @staticmethod
     @canvbinds.bind('<W>', '<w>', '<A>', '<a>', '<S>', '<s>', '<D>', '<d>')
-    def _moveleft(widget, x, y, keysym):
+    def _wasdmove(widget, x, y, keysym):
         dif = dict(w=(0,-1), a=(-1,0), s=(0,1), d=(1,0))
         dx, dy = dif[keysym.lower()]
         widget.event_generate('<Motion>', x=x+dx, y=y+dy, when='tail', warp=True)
@@ -283,14 +302,6 @@ class LCanv(tk.Frame, object):
             text='{:3d}, {:3d}'.format(
                 int(widget.canvasx(x)),
                 int(widget.canvasy(y))))
-
-    @staticmethod
-    @canvbinds.bind('<B1-Motion>')
-    def _modified(widget, x, y):
-        self = widget.master
-        if not self._changed:
-            self._changed = True
-        self._movexhairs(widget, x, y)
 
     @staticmethod
     @canvbinds.bind('<Configure>')

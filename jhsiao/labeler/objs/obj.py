@@ -157,7 +157,7 @@ class Obj(object):
                 master.addtag(tag, 'withtag', idn)
 
     @staticmethod
-    def snapto(master, x, y, target, when='head'):
+    def snapto(master, x, y, target, when='mark'):
         """Snap mouse to target position.
 
         x, y: int
@@ -173,7 +173,8 @@ class Obj(object):
                 '<Motion>',
                 x=x+(target[0]-p[0]),
                 y=y+(target[1]-p[1]),
-                warp=True, when=when)
+                warp=True, when=when,
+                serial=0)
 
     @staticmethod
     def canvxy(master, x, y):
@@ -317,6 +318,22 @@ class Obj(object):
         cls, idn = Obj.parsetag(tag)
         widget.master.set_obj(idn)
         widget.tag_raise(tag, 'Obj')
+
+    @staticmethod
+    @binds.bind('<B1-Motion>')
+    def _modified(widget, x, y, serial):
+        # TODO actually modified or not?
+        # triggered by snapping but snapping
+        # doesn't actually modify...
+        # can generate with serial=0, but
+        # event_generate('<Motion>',...) causes
+        # 2 motion events to be generated.  The
+        # first can detect serial=0, but the
+        # second doesn't have serial=0
+        # generate at tail also does not work
+        # event_generate + after_idle?
+        if serial:
+            widget.master.modify()
 
     # Leave/enter can cause an infinite loop mouse button because the
     # new Item changes shape causing infinite enter/leave, so only
