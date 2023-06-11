@@ -2,7 +2,7 @@
 from __future__ import division
 __all__ = ['Point']
 from .obj import Obj
-from . import ibinds
+from . import bindings
 
 @Obj.register
 class Point(Obj):
@@ -14,7 +14,7 @@ class Point(Obj):
     NCOORDS = 2
     INFO = dict(color='black')
 
-    binds = ibinds['Point']
+    binds = bindings['', 'Point']
 
     radius = 5
     awidth = 3

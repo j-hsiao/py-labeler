@@ -193,7 +193,7 @@ class LCanv(tk.Frame, object):
         return self._changed
 
     @staticmethod
-    @bindings['LCanv.Colorpicker'].bind('<<ColorSelected>>')
+    @bindings('LCanv.Colorpicker', '<<ColorSelected>>')
     def _colorpicked(widget):
         """Select a color.
 

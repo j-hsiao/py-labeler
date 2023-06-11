@@ -2,7 +2,7 @@
 from __future__ import division
 __all__ = ['Rect']
 from .obj import Obj
-from . import ibinds
+from . import bindings
 from .point import Point
 
 @Obj.register
@@ -21,7 +21,7 @@ class Rect(Obj):
     IDX = Obj.IDX + len(TAGS)
     IDNS = 9
     NCOORDS = 4
-    binds = ibinds['Rect']
+    binds = bindings['', 'Rect']
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)
         super(Rect, self).__init__(
@@ -164,7 +164,7 @@ class Rect(Obj):
 
 class RectSide(Obj):
     TAGS = ['RectSide']
-    binds = ibinds['RectSide']
+    binds = bindings['', 'RectSide']
     IDX = Obj.IDX + 2
     def __init__(self, master, x, y, color):
         super(RectSide, self).__init__(
@@ -240,7 +240,7 @@ class RectSide(Obj):
 
 class RectPt(Point):
     TAGS = ['RectPt']
-    binds = ibinds['RectPt']
+    binds = bindings['', 'RectPt']
     IDX = Point.IDX + 2
     def __init__(self, master, x, y, color):
         super(RectPt, self).__init__(master, x, y, color)

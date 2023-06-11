@@ -2,12 +2,12 @@ __all__ = ['BGImage']
 from PIL import Image, ImageTk
 import numpy as np
 
-from . import ibinds
+from . import bindings
 from .obj import Obj
 from jhsiao.tkutil import tk
 
 class BGImage(object):
-    binds = ibinds['BGImage']
+    binds = bindings['', 'BGImage']
     def __init__(self, master):
         self.idn = master.create_image(0,0, anchor='nw')
         self.im = None

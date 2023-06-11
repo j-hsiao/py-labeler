@@ -52,7 +52,7 @@ class DictItem(tk.Frame):
         self.value.insert(0, repr(val))
 
     @staticmethod
-    @bindings['DictItemSub'].bind('<MouseWheel>')
+    @bindings('DictItemSub', '<MouseWheel>')
     def _escrolled(widget, delta):
         canv = widget.master.master.master
         if delta > 0:
@@ -63,14 +63,14 @@ class DictItem(tk.Frame):
                 canv.yview('scroll', 1, 'u')
 
     @staticmethod
-    @bindings['DictItemSub'].bind('<Button-4>')
+    @bindings('DictItemSub', '<Button-4>')
     def _escrollup(widget):
         canv = widget.master.master.master
         if canv.yview()[0] != 0:
             canv.yview('scroll', -1, 'u')
 
     @staticmethod
-    @bindings['DictItemSub'].bind('<Button-5>')
+    @bindings('DictItemSub', '<Button-5>')
     def _escrolldown(widget):
         canv = widget.master.master.master
         if canv.yview()[1] != 1:
@@ -144,7 +144,7 @@ class DictItem(tk.Frame):
         return 'break'
 
     @staticmethod
-    @bindings['DictItemRm'].bind('<ButtonRelease-1>', '<space>', '<Return>')
+    @bindings('DictItemRm', '<ButtonRelease-1>', '<space>', '<Return>')
     def _rm(widget):
         item = widget.master
         row = item.grid_info()['row']
@@ -245,16 +245,16 @@ class Dict(tk.Frame):
             self.scrollcanv.yview('moveto', lo + ((idx+1) / nrows - hi))
 
     @staticmethod
-    @bindings['DictFrame'].bind('<Configure>')
+    @bindings('DictFrame', '<Configure>')
     def _rescroll(widget, width, height):
         widget.master.configure(scrollregion=(0, 0, width, height))
 
     @staticmethod
-    @bindings['DictCanv'].bind('<Configure>')
+    @bindings('DictCanv', '<Configure>')
     def _resized(widget, width):
         widget.master.dframe.grid_columnconfigure(0, minsize=width)
 
     @staticmethod
-    @bindings('')
+    @bindings()
     def _dplus(widget):
         widget.add_item()

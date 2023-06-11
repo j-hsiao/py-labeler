@@ -8,7 +8,7 @@ x4,y4----ax1,ay1---x3,y3
 from __future__ import division
 __all__ = ['RRect']
 from .obj import Obj
-from . import ibinds
+from . import bindings
 from .point import Point
 import math
 
@@ -54,7 +54,7 @@ class RRect(Obj):
     TAGS.append(Obj.make_idtag(TAGS[0]))
     IDX = Obj.IDX + len(TAGS)
     IDNS = 6
-    binds = ibinds['RRect']
+    binds = bindings['', 'RRect']
     NCOORDS = 12
     def __init__(self, master, x, y, color='black'):
         alt = Obj.altcolor(master, color)
@@ -284,7 +284,7 @@ class RRect(Obj):
 class RRectVSide(Obj):
     TAGS = ['RRectVSide']
     IDX = Obj.IDX + 2
-    binds = ibinds['RRectVSide']
+    binds = bindings['', 'RRectVSide']
     def __init__(self, master, x, y, color='black'):
         super(RRectVSide, self).__init__(
             master,
@@ -352,7 +352,7 @@ class RRectVSide(Obj):
 class RRectHSide(Obj):
     TAGS = ['RRectHSide']
     IDX = Obj.IDX + 2
-    binds = ibinds['RRectHSide']
+    binds = bindings['', 'RRectHSide']
     def __init__(self, master, x, y, color='black'):
         super(RRectHSide, self).__init__(
             master,

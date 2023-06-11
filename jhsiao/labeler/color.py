@@ -241,7 +241,7 @@ class RGB(tk.Frame, object):
         self.green.set(str(g))
         self.blue.set(str(b))
 
-    @bindings('', scope=scopes.Trace)
+    @bindings(scope=scopes.Trace)
     def onchange(widget, var, index, op):
         r = widget.red.get()
         g = widget.green.get()
@@ -254,7 +254,7 @@ class RGB(tk.Frame, object):
         widget.change_origin.event_generate(
             '<<ColorChange>>', when='head', data=color)
 
-    @bindings('', scope=scopes.Validation, data=(None, int))
+    @bindings(scope=scopes.Validation, data=(None, int))
     def intvalidate(widget, current, pending, data=None):
         if pending:
             try:
@@ -365,7 +365,7 @@ class HSV(tk.Frame, object):
         return (h/360, s, v)
 
     @staticmethod
-    @bindings['HSV.sv'].bind('<Configure>')
+    @bindings('HSV.sv', '<Configure>')
     def _resize_sv(widget, width, height):
         picker = widget.master
         iheight, iwidth = picker.svpalette.shape[:2]
@@ -379,7 +379,7 @@ class HSV(tk.Frame, object):
                     int((1-v)*(height-1))))
 
     @staticmethod
-    @bindings['HSV.sv'].bind('<B1-Motion>', '<Button-1>')
+    @bindings('HSV.sv', '<B1-Motion>', '<Button-1>')
     def _pick_sv(widget, x, y):
         picker = widget.master
         height, width = picker.svpalette.shape[:2]
@@ -402,7 +402,7 @@ class HSV(tk.Frame, object):
         picker.change_origin.event_generate('<<ColorChange>>', when='head', data=color)
 
 
-    @bindings['HSV.h'].bind('<Configure>')
+    @bindings('HSV.h', '<Configure>')
     def _resize_h(widget, height):
         picker = widget.master
         if picker.hpalette.shape[0] != height:
@@ -412,7 +412,7 @@ class HSV(tk.Frame, object):
                 data=draw_h_selection(
                     picker.hpalette, int((1 - h)*(height-1))))
 
-    @bindings['HSV.h'].bind('<B1-Motion>', '<Button-1>')
+    @bindings('HSV.h', '<B1-Motion>', '<Button-1>')
     def _pick_h(widget, y):
         picker = widget.master
         height = picker.hpalette.shape[0]
@@ -434,7 +434,7 @@ class HSV(tk.Frame, object):
         picker.configure(background=color)
         picker.change_origin.event_generate('<<ColorChange>>', when='head', data=color)
 
-    @bindings('', scope=scopes.Validation, data=(None, float))
+    @bindings(scope=scopes.Validation, data=(None, float))
     def floatvalidate(widget, current, pending, data):
         if pending:
             try:
@@ -526,13 +526,13 @@ class ColorPicker(tk.Label, object):
     def color(self):
         return self.cget('background')
 
-    @bindings('')
+    @bindings()
     def submitted(widget):
         widget.master.result = widget.color()
         widget.master.grab_release()
         widget.master.destroy()
 
-    @bindings('')
+    @bindings()
     def canceled(widget):
         widget.master.grab_release()
         widget.master.destroy()

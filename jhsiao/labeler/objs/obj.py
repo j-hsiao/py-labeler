@@ -2,7 +2,7 @@ from __future__ import print_function
 __all__ = ['Obj']
 import sys
 
-from . import ibinds
+from . import bindings
 
 class Obj(object):
     """An object on a tk.Canvas.
@@ -70,7 +70,7 @@ class Obj(object):
     TAGS = ['Obj']
     IDX = 0
     SEP = ':'
-    binds = ibinds['Obj']
+    binds = bindings['', 'Obj']
     classes = dict()
     IDNS = 0
 
