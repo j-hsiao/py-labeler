@@ -140,12 +140,15 @@ class RRect(Obj):
     def draw(
         widget, ids, x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2):
         """Draw rrect based on coordinates."""
+        if widget.coords(ids[0]) == [x1, y1, x2, y2, x3, y3, x4, y4]:
+            return
         widget.coords(ids[0], x1, y1, x2, y2, x3, y3, x4, y4)
         widget.coords(ids[1], x4, y4, x1, y1)
         widget.coords(ids[2], x2, y2, x3, y3)
         widget.coords(ids[3], x3, y3, x4, y4)
         widget.coords(ids[4], x1, y1, x2, y2)
         widget.coords(ids[5], ax1, ay1, ax2, ay2)
+        widget.master.modify()
 
     @staticmethod
     def coords(widget, idn):
@@ -271,7 +274,9 @@ class RRect(Obj):
         cy = (y1 + y2 + y3 + y4) / 4
         dx = nx-cx
         dy = ny-cy
-        widget.move(widget.gettags('current')[RRect.IDX], dx, dy)
+        if dx, dy != x, y:
+            widget.move(widget.gettags('current')[RRect.IDX], dx, dy)
+            widget.master.modify()
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')
