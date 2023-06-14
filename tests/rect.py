@@ -8,6 +8,10 @@ class Dummy(tk.Tk, object):
         self.objid = None
     def set_obj(self, idn):
         self.objid = idn
+        print('obj set to', idn)
+
+    def modify(self):
+        print('modified')
 
 def test_rect():
     r = Dummy()

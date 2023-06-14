@@ -68,7 +68,9 @@ class Point(Obj):
     def moveto(widget, x, y, idn='current'):
         """Move Point to canvas coordinates (x,y)."""
         r = Point.radius
-        widget.coords(idn, x-r, y-r, x+r, y+r)
+        if Point.coords(widget, idn) != (x,y):
+            widget.coords(idn, x-r, y-r, x+r, y+r)
+            widget.master.modify()
 
     @staticmethod
     def snapto(widget, x, y, idn='current'):

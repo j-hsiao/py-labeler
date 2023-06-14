@@ -60,6 +60,8 @@ class Rect(Obj):
     @staticmethod
     def moveto(master, idns, l, t, r, b):
         """Move rect to coordinates."""
+        if master.coords(idns[0]) == [l,t,r,b]:
+            return
         master.coords(idns[0], l, t, r, b)
         master.coords(idns[1], l, t, r, t)
         master.coords(idns[2], r, t, r, b)
@@ -69,6 +71,7 @@ class Rect(Obj):
         RectPt.moveto(master, r, t, idns[6])
         RectPt.moveto(master, r, b, idns[7])
         RectPt.moveto(master, l, b, idns[8])
+        master.master.modify()
 
     @staticmethod
     def coords(widget, idn):
@@ -153,9 +156,11 @@ class Rect(Obj):
         nx, ny = Obj.canvxy(widget, x, y)
         dx = nx-ox
         dy = ny-oy
-        widget.move(
-            widget.gettags('current')[Rect.IDX],
-            dx, dy)
+        if dx or dy:
+            widget.move(
+                widget.gettags('current')[Rect.IDX],
+                dx, dy)
+            widget.master.modify()
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')

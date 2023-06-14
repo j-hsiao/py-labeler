@@ -319,22 +319,6 @@ class Obj(object):
         widget.master.set_obj(idn)
         widget.tag_raise(tag, 'Obj')
 
-    @staticmethod
-    @binds.bind('<B1-Motion>')
-    def _modified(widget, x, y, serial):
-        # TODO actually modified or not?
-        # triggered by snapping but snapping
-        # doesn't actually modify...
-        # can generate with serial=0, but
-        # event_generate('<Motion>',...) causes
-        # 2 motion events to be generated.  The
-        # first can detect serial=0, but the
-        # second doesn't have serial=0
-        # generate at tail also does not work
-        # event_generate + after_idle?
-        if serial:
-            widget.master.modify()
-
     # Leave/enter can cause an infinite loop mouse button because the
     # new Item changes shape causing infinite enter/leave, so only
     # fire (de)activate when no buttons are pressed

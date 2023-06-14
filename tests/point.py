@@ -12,6 +12,9 @@ class dummy(tk.Tk, object):
         print('set_obj called')
         self.objid = idn
 
+    def modify(self):
+        print('modified')
+
 def test_point():
     r = dummy()
     r.grid_rowconfigure(0, weight=1)
