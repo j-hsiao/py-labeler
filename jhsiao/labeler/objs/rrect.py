@@ -260,7 +260,7 @@ class RRect(Obj):
         x1, y1, x2, y2, x3, y3, x4, y4 = widget.coords(ids[0])
         cx = (x1 + x2 + x3 + x4) / 4
         cy = (y1 + y2 + y3 + y4) / 4
-        Obj.snapto(widget, x, y, (cx, cy))
+        Obj.snapto(widget, x, y, (cx, cy), '<B1-Motion>')
         ax1, ay1, ax2, ay2 = widget.coords(ids[-1])
         widget.master.xhairs.up(ax2-ax1, ay2-ay1)
         widget.master.xhairs.moveto(widget, x, y)
@@ -274,7 +274,7 @@ class RRect(Obj):
         cy = (y1 + y2 + y3 + y4) / 4
         dx = nx-cx
         dy = ny-cy
-        if dx, dy != x, y:
+        if dx or dy:
             widget.move(widget.gettags('current')[RRect.IDX], dx, dy)
             widget.master.modify()
 
@@ -299,14 +299,14 @@ class RRectVSide(Obj):
         self.addtags(master, self.ids, RRectVSide.TAGS)
 
     @staticmethod
-    def snapto(widget, x, y, idn='current'):
+    def snapto(widget, x, y, seq='<Motion>', idn='current'):
         ids = RRectVSide.members(widget, idn)
         idn = widget.find('withtag', idn)[0]
         ax1, ay1, ax2, ay2 = widget.coords(ids[-1])
         if ids.index(idn) == 3:
-            Obj.snapto(widget, x, y, (ax1, ay1))
+            Obj.snapto(widget, x, y, (ax1, ay1), seq)
         else:
-            Obj.snapto(widget, x, y, (ax2, ay2))
+            Obj.snapto(widget, x, y, (ax2, ay2), seq)
 
     @staticmethod
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')
@@ -319,7 +319,7 @@ class RRectVSide(Obj):
         widget.itemconfigure('current', activewidth=1)
         ids = RRectVSide.members(widget, 'current')
         RRect.selected(widget, ids)
-        RRectVSide.snapto(widget, x, y)
+        RRectVSide.snapto(widget, x, y, '<B1-Motion>')
         x1, y1, x2, y2 = widget.coords(ids[-1])
         widget.master.xhairs.up(x2-x1, y2-y1)
         widget.master.xhairs.moveto(widget, x, y)
@@ -367,9 +367,9 @@ class RRectHSide(Obj):
         self.addtags(master, self.ids, RRectHSide.TAGS)
 
     @staticmethod
-    def snapto(widget, x, y, idn='current'):
+    def snapto(widget, x, y, seq='<Motion>', idn='current'):
         x1, y1, x2, y2 = widget.coords(idn)
-        Obj.snapto(widget, x, y, ((x1+x2)/2, (y1+y2)/2))
+        Obj.snapto(widget, x, y, ((x1+x2)/2, (y1+y2)/2), seq)
 
     @staticmethod
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')
@@ -382,7 +382,7 @@ class RRectHSide(Obj):
         widget.itemconfigure('current', activewidth=1)
         ids = RRectHSide.members(widget, 'current')
         RRect.selected(widget, ids)
-        RRectHSide.snapto(widget, x, y)
+        RRectHSide.snapto(widget, x, y, '<B1-Motion>')
         x1, y1, x2, y2 = widget.coords('current')
         widget.master.xhairs.up(x2-x1, y2-y1)
         widget.master.xhairs.moveto(widget, x, y)
@@ -405,7 +405,7 @@ class RRectHSide(Obj):
             if left < 0:
                 dx, dy = ux*left, uy*left
                 if abs(dx) >= 1 or abs(dy) >= 1:
-                    Obj.snapto(widget, x, y, (cx-dx, cy-dy))
+                    Obj.snapto(widget, x, y, (cx-dx, cy-dy), '<B1-Motion>')
                 left = 0
         else:
             ux, uy = norm(perpleft(vx, vy))
@@ -415,7 +415,7 @@ class RRectHSide(Obj):
             if right < 0:
                 dx, dy = ux*right, uy*right
                 if abs(dx) >= 1 or abs(dy) >= 1:
-                    Obj.snapto(widget, x, y, (cx+dx, cy+dy))
+                    Obj.snapto(widget, x, y, (cx+dx, cy+dy), '<B1-Motion>')
                 right = 0
         RRect.draw(widget, ids,
             *RRect.parse_axis(ax1, ay1, vx, vy, left, right))

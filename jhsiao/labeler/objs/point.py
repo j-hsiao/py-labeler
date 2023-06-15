@@ -73,10 +73,10 @@ class Point(Obj):
             widget.master.modify()
 
     @staticmethod
-    def snapto(widget, x, y, idn='current'):
+    def snapto(widget, x, y, seq='<Motion>', idn='current'):
         """Snap mouse to center of point."""
         Obj.snapto(
-            widget, x, y, Point.coords(widget, idn))
+            widget, x, y, Point.coords(widget, idn), seq)
 
     @staticmethod
     @binds.bind('<Shift-Motion>', '<Shift-Leave>')
@@ -88,7 +88,7 @@ class Point(Obj):
     def _select(widget, x, y):
         widget.itemconfigure(
             'current', fill='', activefill='', activewidth=1)
-        Point.snapto(widget, x, y)
+        Point.snapto(widget, x, y, '<B1-Motion>')
 
     @staticmethod
     @binds.bind('<ButtonRelease-1>')

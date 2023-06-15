@@ -157,7 +157,7 @@ class Obj(object):
                 master.addtag(tag, 'withtag', idn)
 
     @staticmethod
-    def snapto(master, x, y, target, when='mark'):
+    def snapto(master, x, y, target, seq='<Motion>', when='mark'):
         """Snap mouse to target position.
 
         x, y: int
@@ -166,11 +166,20 @@ class Obj(object):
             than canvas coordinates.
         target: pair of int
             The target coordinate to warp to in canvas coordinates.
+        seq: str
+            The event sequence to generate.  Testing on other systems,
+            it seems that only generating <Motion> can cause the
+            current canvas item to lose its "current" status.
+            B1-Motion is necessary to maintain the "current" status,
+            especially if it changes the object to become transparent to
+            improve visibility to the image underneath.
+        when: str: 'mark'|'head'|'tail'
+            The when argument for event_generate.
         """
         p = Obj.canvxy(master, x, y)
         if target != p:
             master.event_generate(
-                '<Motion>',
+                seq,
                 x=x+(target[0]-p[0]),
                 y=y+(target[1]-p[1]),
                 warp=True, when=when,

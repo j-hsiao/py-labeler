@@ -60,8 +60,10 @@ class Rect(Obj):
     @staticmethod
     def moveto(master, idns, l, t, r, b):
         """Move rect to coordinates."""
-        if master.coords(idns[0]) == [l,t,r,b]:
-            return
+        if master.coords(idns[0]) != [l,t,r,b]:
+            master.master.modify()
+        # call may still be necessary to reorder the
+        # corresponding parts into canonical positions.
         master.coords(idns[0], l, t, r, b)
         master.coords(idns[1], l, t, r, t)
         master.coords(idns[2], r, t, r, b)
@@ -71,7 +73,6 @@ class Rect(Obj):
         RectPt.moveto(master, r, t, idns[6])
         RectPt.moveto(master, r, b, idns[7])
         RectPt.moveto(master, l, b, idns[8])
-        master.master.modify()
 
     @staticmethod
     def coords(widget, idn):
@@ -143,7 +144,7 @@ class Rect(Obj):
     def _select(widget, x, y):
         Rect.selected(widget, Rect.members(widget, 'current'))
         l, t, r, b = widget.coords('current')
-        Obj.snapto(widget, x, y, ((l+r)//2, (t+b)//2))
+        Obj.snapto(widget, x, y, ((l+r)//2, (t+b)//2), '<B1-Motion>')
 
     @staticmethod
     @binds.bind(
@@ -179,9 +180,9 @@ class RectSide(Obj):
         self.addtags(master, self.ids, RectSide.TAGS)
 
     @staticmethod
-    def snapto(widget, x, y, idn='current'):
+    def snapto(widget, x, y, seq='<Motion>', idn='current'):
         x1, y1, x2, y2 = widget.coords('current')
-        Obj.snapto(widget, x, y, ((x1+x2)//2, (y1+y2)//2))
+        Obj.snapto(widget, x, y, ((x1+x2)//2, (y1+y2)//2), seq)
 
     @staticmethod
     @binds.bind(
@@ -205,7 +206,7 @@ class RectSide(Obj):
     @binds.bind('<Button-1>')
     def _select(widget, x, y):
         Rect.selected(widget, RectSide.members(widget, 'current'))
-        RectSide.snapto(widget, x, y)
+        RectSide.snapto(widget, x, y, '<B1-Motion>')
         widget.itemconfigure('current', activewidth=1)
 
     @staticmethod
