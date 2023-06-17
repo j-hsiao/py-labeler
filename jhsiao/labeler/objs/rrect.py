@@ -153,9 +153,9 @@ class RRect(Obj):
     @staticmethod
     def coords(widget, idn):
         ids = RRect.members(widget, idn)
-        x1, y1, x2, y2, x3, y3, x4, y4 = widget.coords(ids[0])
-        ax1, ay1, ax2, ay2 = widget.coords(ids[-1])
-        return x1, y1, x2, y2, x3, y3, x4, y4, ax1, ay1, ax2, ay2
+        ret = list(widget.coords(ids[0]))
+        ret.extend(widget.coords(ids[-1]))
+        return ret
 
     @staticmethod
     def from_coords(coords, info):

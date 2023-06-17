@@ -49,7 +49,7 @@ class Point(Obj):
     @staticmethod
     def coords(widget, idn):
         l, t, r, b = widget.coords(idn)
-        return (l+r)//2, (t+b)//2
+        return (l+r)*.5, (t+b)*.5
 
     @staticmethod
     def restore(widget, coords, color):

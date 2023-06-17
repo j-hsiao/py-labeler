@@ -130,14 +130,14 @@ class ObjSelector(tk.Frame, object):
             if response:
                 self.classinfo[curname][...] = response
 
-    @bindings('')
+    @bindings()
     def _submit_classedit(widget):
         t = widget.master
         t.response = widget.dict()
         t.grab_release()
         t.destroy()
 
-    @bindings('')
+    @bindings()
     def _cancel_classedit(widget):
         t = widget.master
         t.grab_release()
@@ -167,7 +167,7 @@ class ObjSelector(tk.Frame, object):
             displayname = 'Composite' + displayname[:-len('(Composite)')]
         return displayname
 
-    @bindings('')
+    @bindings()
     def _toggle_creation(widget):
         """Toggle composite creation mode."""
         if widget.creating:
@@ -183,7 +183,7 @@ class ObjSelector(tk.Frame, object):
             widget.clst.configure(state='normal')
             widget.compositename.configure(state='normal')
 
-    @bindings('')
+    @bindings()
     def _create(widget):
         """Create the composite class.
 

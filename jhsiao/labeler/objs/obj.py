@@ -232,6 +232,7 @@ class Obj(object):
 
         Canonical coordinates means x,y points.  This format is most
         easily used in the Canvas and for interpolation.
+
         """
         return Obj.topcall(widget, 'coords', idn)
 
@@ -254,7 +255,7 @@ class Obj(object):
         return coords
 
     @staticmethod
-    def to_dict(widget, idn, info, clsname=None):
+    def to_dict(widget, idn, info, clsname=None, zoom=1):
         """Convert data to dict.
 
         widget: the canvas widget.
@@ -264,7 +265,8 @@ class Obj(object):
         if clsname is None:
             clsname, idn = Obj.parsetag(Obj.toptag(widget, idn))
         cls = Obj.classes[clsname]
-        data = cls.from_coords(cls.coords(widget, idn), info)
+        canonical = [_/zoom for _ in cls.coords(widget, idn)]
+        data = cls.from_coords(canonical, info)
         color = cls.color(widget, idn)
         if widget.winfo_rgb(color) != widget.winfo_rgb(info.get('color')):
             return dict(data=data, color=color)

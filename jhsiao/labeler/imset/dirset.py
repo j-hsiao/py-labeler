@@ -9,6 +9,7 @@ from . import ImageSet
 
 _nsort_pat = re.compile(r'(\d+)')
 def _nsort_key(name):
+    """Convert to numerical sort structure."""
     ret = _nsort_pat.split(name)
     ret[1::2] = [int(_) for _ in ret[1::2]]
     strparts = ret[::2]

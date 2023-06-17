@@ -14,7 +14,7 @@ class CanvInfo(tk.Frame, object):
         self.lxy = tk.Label(self, text='x, y:')
         self.lzoom = tk.Label(self, text='zoom:')
         self.xy = tk.Label(self, text='y')
-        self.zoom = tk.Label(self, text='tit%')
+        self.zoom = tk.Label(self, text='100%')
 
         for col, l in enumerate((
                 self.lxy, self.xy, None, self.lzoom, self.zoom)):
@@ -81,6 +81,7 @@ class LCanv(tk.Frame, object):
         add_bindtags(self.colorpicker, 'LCanv.Colorpicker')
 
     def created_color(self):
+        """Return color for a created obj."""
         color = self.colorpicker.color()
         if self.colormode.get():
             cls = self.selector()
@@ -88,6 +89,11 @@ class LCanv(tk.Frame, object):
             if ccolor is not None:
                 return ccolor
         return color
+
+    def _cur_zoom(self):
+        """Return zoom level."""
+        scrollw = int(self.canv.cget('scrollregion').split()[2])
+        return scrollw / self.bgim.raw.width
 
     def data(self):
         """Get the current info.
@@ -102,7 +108,6 @@ class LCanv(tk.Frame, object):
             ...
         }
         """
-        # TODO account for zoom
         if self.objid is not None:
             self.info[self.objid] = self._dict.dict()
         canv = self.canv
@@ -110,9 +115,10 @@ class LCanv(tk.Frame, object):
         info = {
             k: dict(info=copy.deepcopy(dict(v)), data=[])
             for k, v in selector.classinfo.items()}
+        curzoom = self._cur_zoom()
         for clsname, idn in Obj.topitems(canv):
             dct = info[clsname]
-            odct = Obj.to_dict(canv, idn, dct['info'], clsname)
+            odct = Obj.to_dict(canv, idn, dct['info'], clsname, curzoom)
             oinfo = self.info.get(idn)
             if oinfo:
                 odct['info'] = oinfo

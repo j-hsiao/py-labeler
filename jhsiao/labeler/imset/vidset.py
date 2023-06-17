@@ -1,3 +1,4 @@
+__all__ = ['VidSet']
 import cv2
 
 from . import ImageSet
