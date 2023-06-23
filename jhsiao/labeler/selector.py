@@ -64,7 +64,7 @@ class ObjSelector(tk.Frame, object):
         if not isinstance(cls_or_name, str):
             cls_or_name = cls_or_name.__name__
         try:
-            idx = self.lst.get(0, 'end').index(self.displayname(cls_or_name))
+            idx = self.lst.get(0, 'end').index(cls_or_name)
         except ValueError:
             pass
         else:
@@ -93,7 +93,7 @@ class ObjSelector(tk.Frame, object):
     def _sel_changed(widget):
         """Change the current selected class."""
         self = widget.master
-        curname = self.classname(widget.get(widget.curselection()[0]))
+        curname = widget.get(widget.curselection()[0])
         self._cls = Obj.classes.get(curname)
         color = self.classinfo[curname].get('color')
         if color is not None and self.master.colormode.get():
@@ -107,7 +107,7 @@ class ObjSelector(tk.Frame, object):
         if self.creating:
             self._add_component(widget)
         else:
-            curname = self.classname(widget.get(widget.curselection()[0]))
+            curname = widget.get(widget.curselection()[0])
             top = tk.Toplevel(widget)
             top.title('Edit settings for {}'.format(curname))
             d = Dict(top)
@@ -153,20 +153,6 @@ class ObjSelector(tk.Frame, object):
             if pick >= 0:
                 self.clst.delete(pick)
 
-    @staticmethod
-    def displayname(classname):
-        """Calculate the name to display from class name."""
-        if classname.startswith('Composite'):
-            return classname[len('Composite'):] + '(Composite)'
-        return classname
-
-    @staticmethod
-    def classname(displayname):
-        """Calculate the class name from display name."""
-        if displayname.endswith('(Composite)'):
-            displayname = 'Composite' + displayname[:-len('(Composite)')]
-        return displayname
-
     @bindings()
     def _toggle_creation(widget):
         """Toggle composite creation mode."""
@@ -194,8 +180,7 @@ class ObjSelector(tk.Frame, object):
         tname = widget.compositename.get()
         if names:
             make_composite(
-                [Obj.classes[widget.classname(name)] for name in names],
-                tname)
+                [Obj.classes[name] for name in names], tname)
             widget.reload()
         widget.clst.delete(0, 'end')
         widget.compositename.delete(0, 'end')
@@ -209,8 +194,8 @@ class ObjSelector(tk.Frame, object):
             try:
                 self.classinfo[name]
             except KeyError:
-                self.classinfo[name] = DDict(cls.INFO)
-        toadd = [self.displayname(name) for name in Obj.classes]
+                self.classinfo[name] = DDict({}, cls.INFO)
+        toadd = [name for name in Obj.classes]
         toadd.sort(key=str.lower)
         self.lst.insert('end', *toadd)
         self.lst.selection_clear(0, 'end')

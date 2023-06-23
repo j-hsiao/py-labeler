@@ -1,3 +1,7 @@
+"""Layered dicts for default values.
+
+Setting and deleting values only does so on the topmost DDict.
+"""
 import sys
 if sys.version_info.major > 2:
     from collections.abc import Mapping
@@ -5,63 +9,101 @@ else:
     from collections import Mapping
 
 class DDict(Mapping):
-    """Wrap dict."""
+    """Access multiple dicts as a single dict.
+
+    Modifications only affect the very first dict.
+    """
     def __init__(self, *dicts):
-        self.baks = dicts
-        self.main = {}
+        if not dicts:
+            self.dicts = [{}]
+        else:
+            self.dicts = list(dicts)
 
     def __getitem__(self, k):
-        try:
-            return self.main[k]
-        except KeyError:
-            for bak in self.baks:
-                try:
-                    return bak[k]
-                except KeyError:
-                    pass
-        raise KeyError(repr(k))
+        """Return value from the first dict containing `k`.
+
+        If None contain `k`, raise KeyError.
+        """
+        for d in self.dicts:
+            try:
+                return d[k]
+            except KeyError:
+                pass
+        else:
+            raise KeyError(repr(k))
 
     def __delitem__(self, k):
-        del self.main[k]
+        """Remove a key from first dict if exists."""
+        self.dicts[0].pop(k)
 
     def __setitem__(self, k, v):
-        if k == Ellipsis:
-            self.main = v
-        else:
-            self.main[k] = v
-
-    def get(self, name, default=None):
-        try:
-            return self[name]
-        except KeyError:
-            return default
+        """Add a key to first dict."""
+        self.dicts[0][k] = v
 
     def __repr__(self):
-        return '({},{})'.format(repr(self.main), repr(self.baks))
+        return 'DDict{}'.format(self.dicts)
 
     def __len__(self):
-        return len(list(self.keys()))
+        return len(list(self))
 
     def __iter__(self):
-        return self.keys()
+        covered = set()
+        for d in self.dicts:
+            for k in d:
+                if k not in covered:
+                    yield k
+                    covered.add(k)
+
+    def get(self, name, default=None):
+        """Return value from dict or `default` if not found."""
+        for d in self.dicts:
+            try:
+                return d[k]
+            except KeyError:
+                pass
+        else:
+            return default
+
+    def pop(self, key, *default):
+        """Remove and return a key from first dict.
+
+        If first dict does not contain the key, then take
+        values from following dicts.  If None, then return
+        default value.
+
+        If no default was given, then raise a KeyError if
+        key not found in any dicts.
+        In any case, the first dict will not have `key` as a key after
+        this call.
+        """
+        thing = self.get(key, default)
+        self.dicts[0].pop(key)
+        if thing is default:
+            if default:
+                return default[0]
+            else:
+                raise KeyError(repr(key))
+        else:
+            return thing
 
     def update(self, *args, **kwargs):
-        for k, v in dict(*args, **kwargs).items():
-            self[k] = v
+        self.dicts[0].update(*args, **kwargs)
 
     def keys(self):
-        for k in self.main:
-            yield k
-        s = set(self.main)
-        for bak in self.baks:
-            for k in bak:
-                if k not in s:
-                    s.add(k)
-                    yield k
+        return iter(self)
 
     def values(self):
-        for k in self.keys():
-            yield self[k]
+        covered = set()
+        for d in self.dicts:
+            for k, v in d.items():
+                if k not in covered:
+                    yield v
+                    covered.add(k)
+
     def items(self):
-        for k in self.keys():
-            yield k, self[k]
+        covered = set()
+        for d in self.dicts:
+            for t in d.items():
+                if t[0] not in covered:
+                    yield t
+                    covered.add(t[0])

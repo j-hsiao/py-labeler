@@ -6,7 +6,7 @@ def test_ddict():
     od1 = d1.copy()
     od2 = d2.copy()
 
-    d = DDict(d1, d2)
+    d = DDict({}, d1, d2)
     d[69] = 42
     d['a'] = 0
 
