@@ -4,7 +4,8 @@ import importlib
 import pkgutil
 
 from . import bindings
-from .objs import Obj, __path__
+from .objs import Obj, ObjRegistry
+from .objs import __path__ as objpath
 from jhsiao.tkutil import tk, add_bindtags
 from .objs.composite import make_composite
 from .dict import Dict
@@ -15,6 +16,7 @@ class ObjSelector(tk.Frame, object):
         super(ObjSelector, self).__init__(master, *args, **kwargs)
         self.creating = False
         self.classinfo = {}
+        self.classes = ObjRegistry()
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(2, weight=1)
@@ -35,7 +37,7 @@ class ObjSelector(tk.Frame, object):
         self.clbl.grid(row=0, column=2, columnspan=2, sticky='ew')
         self.clst.grid(row=1, column=2, sticky='nsew')
         self.cscroll.grid(row=1, column=3, sticky='nsew')
-        self.addpath(__path__, 'jhsiao.labeler.objs.')
+        self.addpath(objpath, 'jhsiao.labeler.objs.')
         add_bindtags(self.lst, 'ObjSelector.lst')
         add_bindtags(self.clst, 'ObjSelector.clst')
 
@@ -69,7 +71,7 @@ class ObjSelector(tk.Frame, object):
             pass
         else:
             try:
-                self._cls = Obj.classes[cls_or_name]
+                self._cls = self.classes[cls_or_name]
             except KeyError:
                 pass
             else:
@@ -94,7 +96,7 @@ class ObjSelector(tk.Frame, object):
         """Change the current selected class."""
         self = widget.master
         curname = widget.get(widget.curselection()[0])
-        self._cls = Obj.classes.get(curname)
+        self._cls = self.classes.get(curname)
         color = self.classinfo[curname].get('color')
         if color is not None and self.master.colormode.get():
             self.master.colorpicker.set_color(color)
@@ -180,7 +182,7 @@ class ObjSelector(tk.Frame, object):
         tname = widget.compositename.get()
         if names:
             make_composite(
-                [Obj.classes[name] for name in names], tname)
+                [self.classes[name] for name in names], tname, self.classes)
             widget.reload()
         widget.clst.delete(0, 'end')
         widget.compositename.delete(0, 'end')
@@ -188,14 +190,15 @@ class ObjSelector(tk.Frame, object):
         widget.lst.focus_set()
 
     def reload(self):
-        """Reload the list of classes (sorted order."""
+        """Reload the list of classes (sorted order)."""
         self.lst.delete(0, 'end')
-        for name, cls in Obj.classes.items():
+        for name, cls in Obj.BaseObjs.items():
             try:
                 self.classinfo[name]
             except KeyError:
                 self.classinfo[name] = DDict({}, cls.INFO)
-        toadd = [name for name in Obj.classes]
+        self.classes.update(Obj.BaseObjs)
+        toadd = [name for name in self.classes]
         toadd.sort(key=str.lower)
         self.lst.insert('end', *toadd)
         self.lst.selection_clear(0, 'end')
@@ -205,7 +208,7 @@ class ObjSelector(tk.Frame, object):
     def addpath(self, paths, prefix):
         """Import submodules in path under prefix.
 
-        Any additional Objs should be `register`ed.
+        Any additional Objs should be `Obj.BaseObjs.register()`ed.
         """
         if isinstance(paths, str):
             paths = [paths]

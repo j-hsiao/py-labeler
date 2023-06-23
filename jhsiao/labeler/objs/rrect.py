@@ -33,7 +33,7 @@ def norm(vec):
     return (0,0)
 
 
-@Obj.register
+@Obj.BaseObjs.register
 class RRect(Obj):
     """A rotated rectangle."""
     HELP = (

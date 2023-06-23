@@ -138,7 +138,7 @@ class LCanv(tk.Frame, object):
         for cls, cinfo in info.items():
             classinfo = cinfo['info']
             try:
-                c = Obj.classes[cls]
+                c = self.selector.classes[cls]
             except KeyError:
                 if cls.startswith('Composite'):
                     make_composite(classinfo['components'], cls[len('Composite'):])
@@ -219,7 +219,7 @@ class LCanv(tk.Frame, object):
         else:
             if self.objid is not None:
                 clsname, idn = Obj.parsetag(Obj.toptag(canv, self.objid))
-                Obj.classes[clsname].recolor(
+                self.selector.classes[clsname].recolor(
                     canv, color, self.objid)
                 self._changed = True
 

@@ -4,7 +4,7 @@ __all__ = ['Point']
 from .obj import Obj
 from . import bindings
 
-@Obj.register
+@Obj.BaseObjs.register
 class Point(Obj):
     HELP = 'A point. (x, y)'
     TAGS = ['Point']

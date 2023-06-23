@@ -5,7 +5,7 @@ from .obj import Obj
 from . import bindings
 from .point import Point
 
-@Obj.register
+@Obj.BaseObjs.register
 class Rect(Obj):
     """A rectangle."""
     HELP = ' '.join((

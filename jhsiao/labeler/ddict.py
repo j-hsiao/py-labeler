@@ -4,11 +4,11 @@ Setting and deleting values only does so on the topmost DDict.
 """
 import sys
 if sys.version_info.major > 2:
-    from collections.abc import Mapping
+    from collections.abc import MutableMapping
 else:
-    from collections import Mapping
+    from collections import MutableMapping
 
-class DDict(Mapping):
+class DDict(MutableMapping):
     """Access multiple dicts as a single dict.
 
     Modifications only affect the very first dict.

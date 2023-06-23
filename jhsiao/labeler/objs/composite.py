@@ -111,7 +111,7 @@ class Composite(Obj):
         for idx, c in enumerate(cls.components):
             c.deactivate(widget, ids[cls.IDNIDXS[idx]:cls.IDNIDXS[idx+1]])
 
-def make_composite(components, name=None):
+def make_composite(components, name=None, registry=Obj.BaseObjs):
     """Create a composite Obj.
 
     components: classes to use as comonents.
@@ -149,4 +149,4 @@ def make_composite(components, name=None):
         NCOORDS=coordidxs[-1],
         COORDIDXS=coordidxs,
     )
-    return Obj.register(type(name, (Composite,), attrs))
+    return registry.register(type(name, (Composite,), attrs))

@@ -4,6 +4,13 @@ import sys
 
 from . import bindings
 
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
+
+
+
 class Obj(object):
     """An object on a tk.Canvas.
 
@@ -71,21 +78,60 @@ class Obj(object):
     IDX = 0
     SEP = ':'
     binds = bindings['', 'Obj']
-    classes = dict()
     IDNS = 0
 
-    @staticmethod
-    def register(item):
-        """Register `item` as a top-level Obj."""
-        orig = Obj.classes.get(item.__name__)
-        if orig is None:
-            Obj.classes[item.__name__] = item
-        else:
-            print(
-                item.__name__, 'was already added.',
-                orig, 'vs', item, file=sys.stderr)
-        return item
+    class ObjRegistry(MutableMapping):
+        def __init__(self, *args, **kwargs):
+            self._registry = dict(*args, **kwargs)
 
+        def register(self, item):
+            try:
+                orig = self._registry[item.__name__]
+            except KeyError:
+                self._registry[item.__name__] = item
+            else:
+                print(
+                    item.__name__, 'was already added.',
+                    orig, 'vs', item, file=sys.stderr)
+            return item
+
+        def update(self, other):
+            self._registry.update(other)
+
+        def items(self):
+            return self._registry.items()
+
+        def __getitem__(self, k):
+            return self._registry[k]
+
+        def __setitem__(self, k, v):
+            self._registry[k] = v
+
+        def __delitem__(self, k):
+            del self._registry[k]
+
+        def __iter__(self):
+            return iter(self._registry)
+
+        def __len__(self):
+            return len(self._registry)
+
+        def topcall(self, widget, name, idn, **kwargs):
+            """Call the named method with args on the top class."""
+            cls, idn = Obj.parsetag(Obj.toptag(widget, idn))
+            return getattr(self._registry[cls], name)(
+                widget, idn=idn, **kwargs)
+
+        def color(self, widget, idn):
+            return self.topcall(widget, 'color', idn)
+
+        def recolor(self, widget, color, idn):
+            return self.topcall(widget, 'recolor', idn, color=color)
+
+        def coords(widget, idn):
+            return Obj.topcall(widget, 'coords', idn)
+
+    BaseObjs = ObjRegistry()
     def __init__(self, master, *ids):
         self.ids = []
         for idn in ids:
@@ -197,13 +243,6 @@ class Obj(object):
             *[((x//256)+128)%256 for x in master.winfo_rgb(color)])
 
     @staticmethod
-    def topcall(widget, name, idn, **kwargs):
-        """Call the named method with args on the top class."""
-        cls, idn = Obj.parsetag(Obj.toptag(widget, idn))
-        return getattr(Obj.classes[cls], name)(
-            widget, idn=idn, **kwargs)
-
-    @staticmethod
     def interpolate(coords1, coords2, frac):
         """Interpolate between dct1 and dct2 by frac.
 
@@ -218,13 +257,13 @@ class Obj(object):
     #------------------------------
     @staticmethod
     def color(widget, idn):
-        """Get the color for this Obj."""
-        return Obj.topcall(widget, 'color', idn)
+        """Get the color of the item."""
+        raise NotImplementedError
 
     @staticmethod
     def recolor(widget, color, idn):
         """Change color of the Obj."""
-        return Obj.topcall(widget, 'recolor', idn, color=color)
+        raise NotImplementedError
 
     @staticmethod
     def coords(widget, idn):
@@ -234,7 +273,7 @@ class Obj(object):
         easily used in the Canvas and for interpolation.
 
         """
-        return Obj.topcall(widget, 'coords', idn)
+        raise NotImplementedError
 
     @staticmethod
     def from_coords(coords, info):
@@ -347,7 +386,7 @@ class Obj(object):
         """Call activate."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
-        Obj.classes[cls].activate(widget, widget.find('withtag', tag))
+        Obj.BaseObjs[cls].activate(widget, widget.find('withtag', tag))
 
     @staticmethod
     @binds.bind('<Leave>')
@@ -355,7 +394,7 @@ class Obj(object):
         """Call deactivate."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
-        Obj.classes[cls].deactivate(widget, widget.find('withtag', tag))
+        Obj.BaseObjs[cls].deactivate(widget, widget.find('withtag', tag))
 
     @staticmethod
     @binds.bind('<Button-3>')
@@ -373,3 +412,4 @@ class Obj(object):
             return
         else:
             raise Exception('Failed to find topbase tag.')
+
