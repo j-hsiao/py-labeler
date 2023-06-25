@@ -4,7 +4,7 @@ import importlib
 import pkgutil
 
 from . import bindings
-from .objs import Obj, ObjRegistry
+from .objs import Obj
 from .objs import __path__ as objpath
 from jhsiao.tkutil import tk, add_bindtags
 from .objs.composite import make_composite
@@ -16,7 +16,7 @@ class ObjSelector(tk.Frame, object):
         super(ObjSelector, self).__init__(master, *args, **kwargs)
         self.creating = False
         self.classinfo = {}
-        self.classes = ObjRegistry()
+        self.classes = Obj.ObjRegistry()
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(2, weight=1)
@@ -182,7 +182,7 @@ class ObjSelector(tk.Frame, object):
         tname = widget.compositename.get()
         if names:
             make_composite(
-                [self.classes[name] for name in names], tname, self.classes)
+                [widget.classes[name] for name in names], tname, widget.classes)
             widget.reload()
         widget.clst.delete(0, 'end')
         widget.compositename.delete(0, 'end')
@@ -192,12 +192,13 @@ class ObjSelector(tk.Frame, object):
     def reload(self):
         """Reload the list of classes (sorted order)."""
         self.lst.delete(0, 'end')
-        for name, cls in Obj.BaseObjs.items():
+        self.classes.update(Obj.BaseObjs)
+        print(self.classes)
+        for name, cls in self.classes.items():
             try:
                 self.classinfo[name]
             except KeyError:
                 self.classinfo[name] = DDict({}, cls.INFO)
-        self.classes.update(Obj.BaseObjs)
         toadd = [name for name in self.classes]
         toadd.sort(key=str.lower)
         self.lst.insert('end', *toadd)

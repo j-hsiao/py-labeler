@@ -73,7 +73,7 @@ class Composite(Obj):
         cidxs = cls.COORDIDXS
         for idx, (c, cinfo) in enumerate(zip(
                 cls.components, cls.sepinfo(info))):
-            ret.append(c.from_coords(coords[cidxs[idx]:cidxs[idx+1], cinfo))
+            ret.append(c.from_coords(coords[cidxs[idx]:cidxs[idx+1]], cinfo))
         return ret
 
     @classmethod
@@ -136,7 +136,7 @@ def make_composite(components, name=None, registry=Obj.BaseObjs):
         name = ''.join([cls.__name__ for cls in components])
     info = {
         Obj.SEP.join((cls.__name__, str(idx), key)): value
-        for idx, cls in zip(components)
+        for idx, cls in enumerate(components)
         for key, value in cls.INFO.items() if key != 'color'}
     info['components'] = [c.__name__ for c in components]
     attrs = dict(

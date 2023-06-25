@@ -54,11 +54,11 @@ class DDict(MutableMapping):
                     yield k
                     covered.add(k)
 
-    def get(self, name, default=None):
+    def get(self, key, default=None):
         """Return value from dict or `default` if not found."""
         for d in self.dicts:
             try:
-                return d[k]
+                return d[key]
             except KeyError:
                 pass
         else:

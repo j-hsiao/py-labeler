@@ -95,6 +95,9 @@ class Obj(object):
                     orig, 'vs', item, file=sys.stderr)
             return item
 
+        def __repr__(self):
+            return 'ObjRegistry({})'.format(repr(self._registry))
+
         def update(self, other):
             self._registry.update(other)
 
@@ -386,7 +389,8 @@ class Obj(object):
         """Call activate."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
-        Obj.BaseObjs[cls].activate(widget, widget.find('withtag', tag))
+        widget.master.selector.classes[cls].activate(
+            widget, widget.find('withtag', tag))
 
     @staticmethod
     @binds.bind('<Leave>')
@@ -394,7 +398,8 @@ class Obj(object):
         """Call deactivate."""
         tag = Obj.toptag(widget, 'current')
         cls, idn = Obj.parsetag(tag)
-        Obj.BaseObjs[cls].deactivate(widget, widget.find('withtag', tag))
+        widget.master.selector.classes[cls].deactivate(
+            widget, widget.find('withtag', tag))
 
     @staticmethod
     @binds.bind('<Button-3>')

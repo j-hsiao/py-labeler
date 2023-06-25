@@ -41,8 +41,8 @@ class LCanv(tk.Frame, object):
         self.xhairs = Crosshairs(self.canv)
         self.colorframe = tk.Frame(self, border=2, relief='raised')
         self.colorpicker = ColorPicker(self)
-        self.colormode = tk.BooleanVar(self, value=True)
-        self.colorcheck = tk.Checkbutton(self.colorframe, text='class colors mode', variable=self.colormode)
+        self.class_colors = tk.BooleanVar(self, value=True)
+        self.colorcheck = tk.Checkbutton(self.colorframe, text='class colors mode', variable=self.class_colors)
         self.selector = ObjSelector(self, border=2, relief='sunken')
 
         self.infoframe = tk.Frame(self, border=2, relief='sunken')
@@ -83,7 +83,7 @@ class LCanv(tk.Frame, object):
     def created_color(self):
         """Return color for a created obj."""
         color = self.colorpicker.color()
-        if self.colormode.get():
+        if self.class_colors.get():
             cls = self.selector()
             ccolor = self.selector.classinfo[cls.__name__].get('color')
             if ccolor is not None:
@@ -178,7 +178,8 @@ class LCanv(tk.Frame, object):
             self._dict.set(self.info.get(idn))
             cls, idn = Obj.parsetag(Obj.toptag(self.canv, idn))
             self.selector.select(cls)
-            self.colorpicker.set_color(Obj.color(self.canv, idn))
+            self.colorpicker.set_color(
+                self.selector.classes.color(self.canv, idn))
         self.canv.focus_set()
 
     def unselect(self):
@@ -209,7 +210,7 @@ class LCanv(tk.Frame, object):
         self = widget.master
         canv = self.canv
         color = self.colorpicker.color()
-        if self.colormode.get():
+        if self.class_colors.get():
             cls = self.selector()
             self.selector.classinfo[cls.__name__]['color'] = color
             for clsname, idn in Obj.topitems(canv):
@@ -269,24 +270,6 @@ class LCanv(tk.Frame, object):
         self = widget.master
         if self.objid is not None:
             widget.tag_lower(Obj.toptag(widget, self.objid), 'Obj')
-
-    # TODO: is this actually necessary?
-    @staticmethod
-    @canvbinds.bind('<C>', '<c>')
-    def _recolor_obj(widget):
-        """Recolor the class."""
-        self = widget.master
-        cls = self.selector()
-        name = cls.__name__
-        if self.colormode.get():
-            color = self.selector.classinfo[self.selector().__name__].get(
-                'color', 'black')
-        else:
-            color = self.colorpicker.color()
-        for clsname, idn in Obj.topitems(widget):
-            if clsname == name:
-                cls.recolor(widget, color, idn)
-                self._changed = True
 
     @staticmethod
     @canvbinds.bind('<W>', '<w>', '<A>', '<a>', '<S>', '<s>', '<D>', '<d>')
